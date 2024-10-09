@@ -1,3 +1,4 @@
+<!-- 要做一個table mapping 並且有數據點在上方 觸碰點會出現預設Tooltip，也可以自定義顯示照片 -->
 <template>
   <div ref="chartContainer" class="relative">
     <!-- 給客製化生成tooltip位置使用 -->
@@ -28,14 +29,13 @@
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref, onMounted, useSlots, watch } from 'vue'
+import { ref, onMounted, watch, useSlots } from 'vue'
 import * as d3 from 'd3'
 import JxButton from '@/components/JxButton.vue'
+
 import { useD3Context } from '@/composables/d3/useD3Context'
 import { useD3Base } from '@/composables/d3/useD3Base'
-import { useD3Alarm } from '@/composables/d3/useD3Alarm'
 import { useD3Element } from '@/composables/d3/useD3Element'
 import { useD3Interaction } from '@/composables/d3/useD3Interaction'
 import { useZoom } from '@/composables/d3/useD3Zoom'
@@ -45,6 +45,22 @@ const props = defineProps({
     type: Array,
     required: true
   },
+  layoutData: {
+    type: Array,
+    required: true
+  },
+  width: {
+    type: Number,
+    default: 800
+  },
+  height: {
+    type: Number,
+    default: 600
+  },
+  margin: {
+    type: Object,
+    default: () => ({ top: 20, right: 20, bottom: 40, left: 40 })
+  },
   xKey: {
     type: String,
     required: true
@@ -53,41 +69,13 @@ const props = defineProps({
     type: String,
     required: true
   },
-  width: {
-    type: Number,
-    default: 1000
-  },
-  height: {
-    type: Number,
-    default: 300
-  },
-  margin: {
-    type: Object,
-    default: () => ({ top: 20, right: 20, bottom: 120, left: 40 })
+  seriesKey: {
+    type: String,
+    required: true
   },
   xType: {
     type: String,
-    default: 'band'
-  },
-  xAxisSampleRate: {
-    type: Number,
-    default: 1
-  },
-  xAxisType: {
-    type: String,
-    default: 'sample'
-  },
-  title: {
-    type: String,
-    default: ''
-  },
-  seriesKey: {
-    type: String,
-    default: ''
-  },
-  hasLine: {
-    type: Boolean,
-    default: true
+    default: 'linear'
   }
 })
 const chartContainer = ref(null)
@@ -95,9 +83,8 @@ const slots = useSlots()
 const context = useD3Context(props, chartContainer, slots)
 
 const { initChart, drawXAxis, drawYAxis, createScales } = useD3Base(context)
-const { drawPoints, drawThresholds, drawLine, drawLegend } = useD3Element(context)
-const { createAlarmLimit } = useD3Alarm()
-const alarmLimit = createAlarmLimit(slots)
+const { drawPoints, drawLegend } = useD3Element(context)
+
 const {
   tooltip,
   tooltipShow,
@@ -113,21 +100,15 @@ const {
 
 const { createBrush, brushEnd, resetZoom, resetBtnShow } = useZoom(context)
 
-let brushContent, ucl, lcl
-ucl = alarmLimit?.ucl
-lcl = alarmLimit?.lcl
+let brushContent
 
 function drawChart() {
   if (!chartContainer.value) return
   // 清除先前的圖表
   d3.select(chartContainer.value).selectAll('*').remove()
   // 初始化產出svg,xScale,yScale
-  // const initObject = initChart()
-  // svg = initObject.svg
-  // xScale = initObject.xScale
-  // yScale = initObject.yScale
   const { svg } = initChart()
-  const { xScale, yScale } = createScales()
+  const { xScale, yScale } = createScales({ left: 0, right: 515, top: 0, bottom: 510 })
 
   // 在SVG加上遮罩
   const innerContent = svg.append('g').attr('clip-path', 'url(#clipPath)')
@@ -137,12 +118,19 @@ function drawChart() {
       if (props.hasLine) {
         drawLine({ innerContent, xScale, yScale })
       }
+      innerContent.selectAll('path').remove()
+      innerContent
+        .selectAll(`layout-path`)
+        .data(props.layoutData)
+        .enter()
+        .append('path')
+        .attr('d', (d) => line(d))
+        .attr('stroke', 'rgba(0,0,0,0.2)')
+        .attr('fill', 'none')
       drawPoints({
         innerContent,
         xScale,
         yScale,
-        ucl,
-        lcl,
         onMouseOver: pointMouseOver(svg),
         onMouseOut: pointMouseOut(),
         onRectMouseOver: legendMouseOver(),
@@ -152,38 +140,33 @@ function drawChart() {
       })
       drawXAxis(props.xAxisType, props.xAxisSampleRate)
       drawYAxis(null, props.margin.left)
-      drawThresholds({ innerContent, yScale, slots })
       brushContent.call(brush.move, null)
     })
   )
   brushContent = innerContent.append('g').call(brush)
 
-  // 繪製Title
-  svg
-    .append('text')
-    .attr('x', props.width / 2)
-    .attr('y', 15)
-    .attr('text-anchor', 'middle')
-    .style('font-weight', 'bold')
-    .style('user-select', 'none')
-    .text(props.title)
+  drawXAxis('table-mapping', null)
+  drawYAxis('table-mapping', props.margin.left)
 
-  // 繪製X,Y軸
-  drawXAxis(props.xAxisType, props.xAxisSampleRate)
-  drawYAxis(null, props.margin.left)
-  // 繪製管制線
-  drawThresholds({ innerContent, yScale, slots })
-  // 繪製連線
-  if (props.hasLine) {
-    drawLine({ innerContent, xScale, yScale })
-  }
-  // 繪製點
+  const line = d3
+    .line()
+    .x((d) => xScale(d.x))
+    .y((d) => yScale(d.y))
+
+  innerContent
+    .selectAll(`layout-path`)
+    .data(props.layoutData)
+    .enter()
+    .append('path')
+    .attr('d', (d) => line(d))
+    .attr('stroke', 'rgba(0,0,0,0.2)')
+    .attr('fill', 'none')
+
   drawPoints({
+    chartType: 'table-mapping',
     innerContent,
     xScale,
     yScale,
-    ucl,
-    lcl,
     onMouseOver: pointMouseOver(svg),
     onMouseOut: pointMouseOut(),
     onRectMouseOver: legendMouseOver(),
@@ -191,7 +174,6 @@ function drawChart() {
     onTextMouseOver: legendMouseOver(),
     onTextMouseOut: legendMouseOut()
   })
-  // 繪製Legend
   drawLegend({
     svg,
     onRectMouseOver: legendMouseOver(),
