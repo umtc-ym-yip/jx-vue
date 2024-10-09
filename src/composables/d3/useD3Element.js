@@ -15,6 +15,7 @@ export function useD3Element(context) {
 
   function drawPoints(options = {}) {
     const {
+      chartType,
       innerContent,
       xScale,
       yScale,
@@ -60,7 +61,7 @@ export function useD3Element(context) {
       .attr('r', pointSize)
       .attr('fill', (d) => {
         if (seriesKey) {
-          return colorScale(d[seriesKey])
+          return d[seriesKey] === '0' ? 'gray' : colorScale(d[seriesKey])
         }
         const y = d[yKey]
         if ((ucl && y > Number(ucl)) || (lcl && y < Number(lcl))) {
@@ -68,7 +69,8 @@ export function useD3Element(context) {
         }
         return 'steelblue'
       })
-      .attr('stroke', 'white')
+      .attr('opacity', (d) => (d[seriesKey] === '0' ? 0.2 : 1))
+      .attr('stroke', (d) => (d[seriesKey] === '0' || chartType === 'table-mapping' ? '' : 'white'))
       .attr('stroke-width', 1)
       .on('mouseover', function (event, d) {
         if (onMouseOver) onMouseOver(event, d, this)
@@ -220,7 +222,7 @@ export function useD3Element(context) {
       .attr('y', (d) => d.y)
       .attr('width', rectSize)
       .attr('height', rectSize)
-      .attr('fill', (d) => colorScale(d[seriesKey]))
+      .attr('fill', (d) => (d[seriesKey] === '0' ? 'gray' : colorScale(d[seriesKey])))
       .attr('cursor', 'pointer')
       .on('mouseover', function (event, d) {
         if (onRectMouseOver) onRectMouseOver(event, d, this)

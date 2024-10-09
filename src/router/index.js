@@ -11,6 +11,7 @@ import Icon from '../components/stories/Icon.vue'
 import Modal from '../components/stories/Modal.vue'
 import Radio from '../components/stories/Radio.vue'
 import PointTrend from '../components/stories/PointTrend.vue'
+import TableMapping from '../components/stories/TableMapping.vue'
 
 import { componentLinks, d3Links } from '@/config/navLinks'
 
@@ -95,6 +96,11 @@ const router = createRouter({
       path: '/stories/d3pointtrend',
       name: 'D3PointTrend',
       component: PointTrend
+    },
+    {
+      path: '/stories/tablemapping',
+      name: 'TableMapping',
+      component: TableMapping
     }
   ]
 })

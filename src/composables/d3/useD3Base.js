@@ -19,14 +19,35 @@ export function useD3Base(context) {
       .append('clipPath')
       .attr('id', 'clipPath')
       .append('rect')
-      .attr('width', width)
+      .attr('x', margin.left)
+      .attr('y', margin.top)
+      .attr('width', width - margin.right)
       .attr('height', height - margin.bottom)
 
     return svg
   }
 
-  const createScales = () => {
-    // Create xScale
+  const createFixedScales = ({ left, right, top, bottom }) => {
+    xScale =
+      xType === 'band'
+        ? d3
+            .scaleBand()
+            .domain([left, right])
+            .range([margin.left, width - margin.right])
+            .padding(0.1)
+        : d3
+            .scaleLinear()
+            .domain([left, right])
+            .range([margin.left, width - margin.right])
+
+    yScale = d3
+      .scaleLinear()
+      .domain([top, bottom])
+      .range([height - margin.bottom, margin.top])
+    return { xScale, yScale }
+  }
+
+  const createDynamicScales = () => {
     if (xType === 'band') {
       xScale = d3
         .scaleBand()
@@ -39,8 +60,6 @@ export function useD3Base(context) {
         .domain(d3.extent(data, (d) => d[xKey]))
         .range([margin.left, width - margin.right])
     }
-
-    // Get threshold values
     const thresholdSlots = slots.thresholds?.() || []
     const thresholdValues = thresholdSlots.map((slot) => slot.props?.value).filter(Boolean)
 
@@ -53,13 +72,21 @@ export function useD3Base(context) {
       d3.max(data, (d) => Number(d[yKey])),
       ...thresholdValues.map((d) => Number(d))
     )
-
     yScale = d3
       .scaleLinear()
       .domain([yMin - yMin * 0.05, yMax + yMax * 0.05])
       .range([height - margin.bottom, margin.top])
 
     return { xScale, yScale }
+  }
+
+  const createScales = ({ left, right, top, bottom } = {}) => {
+    let isFixed = left === 0 ? true : left && right && top && bottom === 0 ? true : bottom
+    if (isFixed) {
+      return createFixedScales({ left, right, top, bottom })
+    } else {
+      return createDynamicScales()
+    }
   }
 
   const drawXAxis = (type, sampleRate) => {
@@ -81,6 +108,8 @@ export function useD3Base(context) {
       xAxis = d3.axisBottom(xScale)
     } else if (type === 'ticks') {
       xAxis = d3.axisBottom(xScale).tickFormat((d, i) => (i % sampleRate === 0 ? d : ''))
+    } else if (type === 'table-mapping') {
+      xAxis = d3.axisBottom(xScale).tickSizeOuter(0).tickSizeInner(5).ticks(10)
     } else {
       xAxis = d3.axisBottom(xScale)
     }
@@ -92,17 +121,24 @@ export function useD3Base(context) {
       .attr('transform', `translate(0,${height - margin.bottom})`)
       .call(xAxis)
 
-    xAxisGroup
-      .selectAll('text')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end')
-      .attr('dx', '-.8em')
-      .attr('dy', '.15em')
+    if (type === 'table-mapping') {
+      xAxisGroup.selectAll('text').style('text-anchor', 'middle')
+    } else {
+      xAxisGroup
+        .selectAll('text')
+        .attr('transform', type === 'table-mapping' ? null : 'rotate(-45)')
+        .style('text-anchor', 'end')
+        .attr('dx', '-.8em')
+        .attr('dy', '.15em')
+    }
   }
 
-  const drawYAxis = (toLeft) => {
+  const drawYAxis = (type, toLeft) => {
     svg.selectAll('.y-axis').remove()
-    const yAxis = d3.axisLeft(yScale)
+    let yAxis =
+      type === 'table-mapping'
+        ? d3.axisLeft(yScale).tickSizeOuter(0).tickSizeInner(5).ticks(10)
+        : d3.axisLeft(yScale)
     svg
       .append('g')
       .attr('class', 'y-axis')
@@ -113,10 +149,10 @@ export function useD3Base(context) {
 
   const initChart = () => {
     svg = createSvg()
-    const scales = createScales()
-    xScale = scales.xScale
-    yScale = scales.yScale
-    return { svg, xScale, yScale }
+    // const scales = createScales()
+    // xScale = scales.xScale
+    // yScale = scales.yScale
+    return { svg }
   }
 
   return {
