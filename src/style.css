@@ -1,0 +1,6 @@
+@import 'material-symbols';
+
+/* 你的其他樣式，包括 Tailwind 指令 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
