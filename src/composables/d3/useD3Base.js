@@ -1,7 +1,8 @@
 import { onMounted } from 'vue'
 import * as d3 from 'd3'
 
-export function useD3Base(props, chartContainer) {
+export function useD3Base(context) {
+  const { props, chartContainer, slots } = context
   let svg, xScale, yScale
   const { width, height, margin, data, xKey, yKey, xType, seriesKey } = props
 
@@ -39,9 +40,19 @@ export function useD3Base(props, chartContainer) {
         .range([margin.left, width - margin.right])
     }
 
-    // Create yScale
-    const yMin = d3.min(data, (d) => Number(d[yKey]))
-    const yMax = d3.max(data, (d) => Number(d[yKey]))
+    // Get threshold values
+    const thresholdSlots = slots.thresholds?.() || []
+    const thresholdValues = thresholdSlots.map((slot) => slot.props?.value).filter(Boolean)
+
+    // Calculate y domain including thresholds
+    const yMin = Math.min(
+      d3.min(data, (d) => Number(d[yKey])),
+      ...thresholdValues.map((d) => Number(d))
+    )
+    const yMax = Math.max(
+      d3.max(data, (d) => Number(d[yKey])),
+      ...thresholdValues.map((d) => Number(d))
+    )
 
     yScale = d3
       .scaleLinear()
@@ -111,6 +122,7 @@ export function useD3Base(props, chartContainer) {
   return {
     initChart,
     drawXAxis,
-    drawYAxis
+    drawYAxis,
+    createScales // 如果需要在外部使用這個函數
   }
 }

@@ -33,12 +33,12 @@
 import { ref, onMounted, useSlots, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import JxButton from '@/components/JxButton.vue'
+import { useD3Context } from '@/composables/d3/useD3Context'
 import { useD3Base } from '@/composables/d3/useD3Base'
 import { useD3Alarm } from '@/composables/d3/useD3Alarm'
 import { useD3Element } from '@/composables/d3/useD3Element'
 import { useD3Interaction } from '@/composables/d3/useD3Interaction'
 import { useZoom } from '@/composables/d3/useD3Zoom'
-import { getColorBySeries } from '@/utils/d3/colorUtils'
 
 const props = defineProps({
   data: {
@@ -90,16 +90,14 @@ const props = defineProps({
     default: true
   }
 })
-
 const chartContainer = ref(null)
-const { initChart, drawXAxis, drawYAxis } = useD3Base(props, chartContainer)
-
-const { drawPoints, drawThresholds, drawLine, drawLegend } = useD3Element(props)
-
-const { createAlarmLimit } = useD3Alarm()
 const slots = useSlots()
-const alarmLimit = createAlarmLimit(slots)
+const context = useD3Context(props, chartContainer, slots)
 
+const { initChart, drawXAxis, drawYAxis } = useD3Base(context)
+const { drawPoints, drawThresholds, drawLine, drawLegend } = useD3Element(context)
+const { createAlarmLimit } = useD3Alarm()
+const alarmLimit = createAlarmLimit(slots)
 const {
   tooltip,
   tooltipShow,
@@ -111,11 +109,11 @@ const {
   pointMouseOut,
   legendMouseOver,
   legendMouseOut
-} = useD3Interaction(props, chartContainer)
+} = useD3Interaction(context)
 
-const { createBrush, brushEnd, resetZoom, resetBtnShow } = useZoom(props)
+const { createBrush, brushEnd, resetZoom, resetBtnShow } = useZoom(context)
 
-let svg, xScale, yScale, innerContent, brush, brushContent, colorScale, ucl, lcl
+let svg, xScale, yScale, innerContent, brush, brushContent, ucl, lcl
 ucl = alarmLimit?.ucl
 lcl = alarmLimit?.lcl
 
@@ -166,28 +164,6 @@ function drawChart() {
     .style('font-weight', 'bold')
     .style('user-select', 'none')
     .text(props.title)
-
-  // Get threshold values
-  const thresholdSlots = slots.thresholds?.() || []
-  const thresholdValues = thresholdSlots.map((slot) => slot.props?.value).filter(Boolean)
-
-  // Calculate y domain including thresholds
-  const yMin = Math.min(
-    d3.min(props.data, (d) => Number(d[props.yKey])),
-    ...thresholdValues.map((d) => Number(d))
-  )
-  const yMax = Math.max(
-    d3.max(props.data, (d) => Number(d[props.yKey])),
-    ...thresholdValues.map((d) => Number(d))
-  )
-
-  yScale.domain([yMin - yMin * 0.05, yMax + yMax * 0.05])
-  // Create color scale for series
-  if (props.seriesKey) {
-    const uniqueSeries = [...new Set(props.data.map((d) => d[props.seriesKey]))]
-
-    colorScale = d3.scaleOrdinal().domain(uniqueSeries).range(getColorBySeries(uniqueSeries))
-  }
 
   // Draw axes
   drawXAxis(props.xAxisType, props.xAxisSampleRate)

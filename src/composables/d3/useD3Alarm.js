@@ -1,4 +1,4 @@
-export function useD3Alarm(props) {
+export function useD3Alarm() {
   let ucl, lcl
   function createAlarmLimit(slots) {
     const thresholdSlots = slots.thresholds?.()
