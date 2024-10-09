@@ -1,7 +1,8 @@
 import * as d3 from 'd3'
 import { ref, nextTick } from 'vue'
 
-export function useD3Interaction(props, chartContainer) {
+export function useD3Interaction(context) {
+  const { props, chartContainer } = context
   const { seriesKey } = props
 
   // Tooltip

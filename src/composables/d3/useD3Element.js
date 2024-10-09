@@ -2,8 +2,8 @@ import * as d3 from 'd3'
 import { getColorBySeries } from '../../utils/d3/colorUtils.js'
 import { useD3Alarm } from './useD3Alarm.js'
 
-export function useD3Element(props) {
-  const { width, height, margin, data, xKey, yKey, xType, seriesKey } = props
+export function useD3Element(context) {
+  const { width, height, margin, data, xKey, yKey, xType, seriesKey } = context.props
   let colorScale
 
   function createColorScale() {

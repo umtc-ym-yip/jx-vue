@@ -1,7 +1,8 @@
 import { ref, nextTick } from 'vue'
 import * as d3 from 'd3'
 
-export function useZoom(props) {
+export function useZoom(context) {
+  const { props } = context
   const { width, height, xType } = props
 
   const resetBtnShow = ref(false)
