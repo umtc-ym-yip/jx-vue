@@ -15,7 +15,7 @@ export const componentLinks = [
 
 export const d3Links = [
   { name: 'D3PointTrend', path: '/stories/d3pointtrend' },
-  { name: 'Link 2', path: '/nav2/link2' }
+  { name: 'D3TableMapping', path: '/stories/tablemapping' }
   // 添加更多 nav2 的連結...
 ]
 
