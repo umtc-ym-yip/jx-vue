@@ -70,7 +70,7 @@ JX-Vue 提供了以下常用 UI 組件：
 
 使用示例：
 
-````vue
+```vue
 <template>
   <JxSelect :options="options" v-model="selectedOption" />
   <JxTable :data="tableData" :columns="tableColumns" />
@@ -81,17 +81,7 @@ import { ref } from 'vue'
 import { JxSelect, JxTable, JxRadio } from '@/components'
 // 組件邏輯...
 </script>
-
-### D3.js 數據可視化組件 JX-Vue 還提供了基於 D3.js 的數據可視化組件： - LineChart - BarChart -
-PieChart - ScatterPlot - 等等 使用示例： ```vue
-<template>
-  <JxLineChart :data="lineChartData" />
-</template>
-<script setup>
-import { JxLineChart } from '@/components'
-// 圖表邏輯...
-</script>
-````
+```
 
 ### D3.js 數據可視化組件
 
@@ -105,15 +95,39 @@ JX-Vue 還提供了基於 D3.js 的數據可視化組件：
 
 使用示例：
 
-vue
+```vue
 <template>
-<JxLineChart :data="chartData" :options="chartOptions" />
+  <JxLineChart :data="lineChartData" />
+</template>
+<script setup>
+import { JxLineChart } from '@/components'
+// 圖表邏輯...
+</script>
+```
+
+### D3.js 數據可視化組件
+
+JX-Vue 還提供了基於 D3.js 的數據可視化組件：
+
+- LineChart
+- BarChart
+- PieChart
+- ScatterPlot
+- 等等
+
+使用示例：
+
+```vue
+<template>
+  <JxLineChart :data="chartData" :options="chartOptions" />
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { JxLineChart } from '@/components/d3'
 // 圖表邏輯...
+</script>
+```
 
 ## 項目結構
 
