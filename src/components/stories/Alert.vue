@@ -152,5 +152,5 @@ const showCustomCancelTextAlert = () =>
 const showWithFooterAlert = () =>
   showAlert('info', '系統更新', { footer: '<a href="#">了解更多</a>' })
 const showHtmlContentAlert = () =>
-  showAlert('info', '', { html: '<b>粗體文字</b> 和 <i>斜體文字</i>' })
+  showAlert('info', '', { html: '<b>粗體文字</b> 和 <i>斜體文</i>' })
 </script>
