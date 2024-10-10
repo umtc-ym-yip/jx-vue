@@ -13,7 +13,7 @@
       <!-- 預設tooltip -->
       <div
         ref="tooltip"
-        class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
+        class="absolute bg-white border  border-gray-300 rounded p-2.5 text-sm"
         :class="{ 'opacity-0': hiddenTooltip }"
         v-if="tooltipShow"
         :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
@@ -23,14 +23,14 @@
       </div>
     </slot>
     <slot name="thresholds"></slot>
-    <div class="absolute top-0 right-0" v-if="resetBtnShow">
+    <div class="absolute" :style="buttonStyle" v-if="resetBtnShow">
       <JxButton size="sm" color="secondary" :is-outline="true" @click="reset">Reset</JxButton>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, useSlots, watch } from 'vue'
+import { ref, computed, onMounted, useSlots, watch } from 'vue'
 import * as d3 from 'd3'
 import JxButton from '@/components/JxButton.vue'
 import { useD3Context } from '@/composables/d3/useD3Context'
@@ -90,6 +90,10 @@ const props = defineProps({
     default: true
   }
 })
+const buttonStyle = computed(() => {
+  return `left: ${props.width - props.margin.right}px; top: ${props.margin.top}px;`
+})
+
 const chartContainer = ref(null)
 const slots = useSlots()
 const context = useD3Context(props, chartContainer, slots)
