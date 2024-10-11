@@ -17,6 +17,7 @@
 <script setup>
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
+import { API_BASE_URL, API_ENDPOINTS } from '@/config/api'
 
 const props = defineProps({
   data: {
@@ -32,7 +33,7 @@ const props = defineProps({
 const imageData = ref(null)
 
 async function getImage(url, factory) {
-  return axios.get(`http://10.22.94.222:8000/aoi/image?url=${url}&factory=${factory}`)
+  return axios.get(`${API_BASE_URL}${API_ENDPOINTS.AOI_IMAGE}?url=${url}&factory=${factory}`)
 }
 
 onMounted(async () => {

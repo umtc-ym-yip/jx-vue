@@ -118,6 +118,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
+import { API_BASE_URL, API_ENDPOINTS } from '@/config/api'
+
 import D3TableMapping from '@/components/d3/D3TableMapping.vue'
 import D3AsyncImage from '@/components/d3/D3AsyncImage.vue'
 import StoryContainer from './StoryContainer.vue'
@@ -422,10 +424,11 @@ const mockLayoutData = [
 
 const getmappingData = (lot, layer, isincludefake = 1, process, factory) =>
   axios.get(
-    `http://10.22.94.222:8000/aoi/mapping/${lot}/${layer}/${isincludefake}/${process}/${factory}`
+    `${API_BASE_URL}${API_ENDPOINTS.AOI_MAPPING}/${lot}/${layer}/${isincludefake}/${process}/${factory}`
   )
-const getLayoutData = () =>
-  axios.get(`http://10.22.94.222:8000/aoi/layout/3273012/249PE002-04-00/-L9L14`)
+const getLayoutData = () => {
+  return axios.get(`${API_BASE_URL}${API_ENDPOINTS.AOI_LAYOUT}/3273012/249PE002-04-00/-L9L14`)
+}
 
 async function loadData() {
   try {
