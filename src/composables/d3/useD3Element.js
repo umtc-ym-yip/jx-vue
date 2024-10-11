@@ -58,7 +58,7 @@ export function useD3Element(context) {
             : xScale(d[xKey])
       )
       .attr('cy', (d) => yScale(d[yKey]))
-      .attr('r', pointSize)
+      .attr('r', (d) => (d[seriesKey] === '0' ? 1.5 : pointSize))
       .attr('fill', (d) => {
         if (seriesKey) {
           return d[seriesKey] === '0' ? 'gray' : colorScale(d[seriesKey])

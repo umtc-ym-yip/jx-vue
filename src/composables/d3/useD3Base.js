@@ -21,8 +21,8 @@ export function useD3Base(context) {
       .append('rect')
       .attr('x', margin.left)
       .attr('y', margin.top)
-      .attr('width', width - margin.right)
-      .attr('height', height - margin.bottom)
+      .attr('width', width - margin.right - margin.left)
+      .attr('height', height - margin.bottom - margin.top)
 
     return svg
   }

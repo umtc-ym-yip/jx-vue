@@ -24,13 +24,13 @@
       </div>
     </slot>
     <slot name="thresholds"></slot>
-    <div class="absolute top-0 right-0" v-if="resetBtnShow">
+    <div class="absolute" :style="buttonStyle" v-if="resetBtnShow">
       <JxButton size="sm" color="secondary" :is-outline="true" @click="reset">Reset</JxButton>
     </div>
   </div>
 </template>
 <script setup>
-import { ref, onMounted, watch, useSlots } from 'vue'
+import { ref, computed, onMounted, watch, useSlots } from 'vue'
 import * as d3 from 'd3'
 import JxButton from '@/components/JxButton.vue'
 
@@ -51,11 +51,11 @@ const props = defineProps({
   },
   width: {
     type: Number,
-    default: 800
+    default: 400
   },
   height: {
     type: Number,
-    default: 600
+    default: 300
   },
   margin: {
     type: Object,
@@ -78,6 +78,11 @@ const props = defineProps({
     default: 'linear'
   }
 })
+
+const buttonStyle = computed(() => {
+  return `left: ${props.width - props.margin.right}px; top: ${props.margin.top}px;`
+})
+
 const chartContainer = ref(null)
 const slots = useSlots()
 const context = useD3Context(props, chartContainer, slots)

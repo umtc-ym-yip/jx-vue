@@ -31,11 +31,7 @@
         <pre>
          &lt;JxButton size="sm" color="primary" text="小按鈕" /&gt;
 &lt;JxButton size="md" color="primary" text="中按鈕" /&gt;
-<<<<<<< HEAD
-&lt;JxButton size="lg" color="primary" text="大按鈕" /&gt</pre
-=======
 &lt;JxButton size="lg" color="primary" text="大按鈕" /&gt;</pre
->>>>>>> ff3f097ca01bdd9ac00bb319f6aee267f859c7fd
         >
       </template>
 
@@ -201,9 +197,7 @@
         >
       </template>
 
-      <template #notes>
-        載入狀態的按鈕會顯示一個旋轉的載入圖標，並且不響應點擊事件。
-      </template>
+      <template #notes> 載入狀態的按鈕會顯示一個旋轉的載入圖標，並且不響應點擊事件。 </template>
 
       <div class="flex space-x-2">
         <JxButton text="正常按鈕" color="primary" />
@@ -211,7 +205,7 @@
       </div>
     </StorySection>
   </StoryContainer>
-  <JxAlert v-model:show="alertConfig.show" v-bind="alertConfig"/>
+  <JxAlert v-model:show="alertConfig.show" v-bind="alertConfig" />
 </template>
 
 <script setup>
@@ -222,11 +216,11 @@ import StorySection from './StorySection.vue'
 import StoryCode from './StoryCode.vue'
 import StoryList from './StoryList.vue'
 
-import {showAlert,alertConfig} from '@/utils/sweetalert/swal.js'
+import { showAlert, alertConfig } from '@/utils/sweetalert/swal.js'
 import JxAlert from '../JxAlert.vue'
 
 const isLoading = ref(false)
-function loadingClick(){
+function loadingClick() {
   isLoading.value = true
   setTimeout(() => {
     showAlert('success', '載入成功')
