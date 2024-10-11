@@ -1,8 +1,5 @@
 import '@/style.css'
-<<<<<<< HEAD
-=======
-import '@fortawesome/fontawesome-free/css/all.css';
->>>>>>> ff3f097ca01bdd9ac00bb319f6aee267f859c7fd
+import '@fortawesome/fontawesome-free/css/all.css'
 import hljs from 'highlight.js/lib/core'
 import javascript from 'highlight.js/lib/languages/javascript'
 import xml from 'highlight.js/lib/languages/xml'

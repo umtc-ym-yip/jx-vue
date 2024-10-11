@@ -202,24 +202,11 @@
       </template>
 
       <template #notes>
-<<<<<<< HEAD
-        載入狀態的按鈕會顯示Loading...<del>一個旋轉的載入圖標</del>，並且不響應點擊事件。
-=======
         載入狀態的按鈕會顯示一個旋轉的載入圖標，並且不響應點擊事件。
->>>>>>> ff3f097ca01bdd9ac00bb319f6aee267f859c7fd
       </template>
 
       <div class="flex space-x-2">
         <JxButton text="正常按鈕" color="primary" />
-<<<<<<< HEAD
-        <JxButton text="載入中" color="primary" :loading="true" />
-      </div>
-    </StorySection>
-  </StoryContainer>
-</template>
-
-<script setup>
-=======
         <JxButton text="模擬載入" color="primary" :loading="isLoading" @click="loadingClick" />
       </div>
     </StorySection>
@@ -229,14 +216,11 @@
 
 <script setup>
 import { ref } from 'vue'
->>>>>>> ff3f097ca01bdd9ac00bb319f6aee267f859c7fd
 import JxButton from '../JxButton.vue'
 import StoryContainer from './StoryContainer.vue'
 import StorySection from './StorySection.vue'
 import StoryCode from './StoryCode.vue'
 import StoryList from './StoryList.vue'
-<<<<<<< HEAD
-=======
 
 import {showAlert,alertConfig} from '@/utils/sweetalert/swal.js'
 import JxAlert from '../JxAlert.vue'
@@ -249,5 +233,4 @@ function loadingClick(){
     isLoading.value = false
   }, 3000)
 }
->>>>>>> ff3f097ca01bdd9ac00bb319f6aee267f859c7fd
 </script>
