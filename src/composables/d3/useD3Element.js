@@ -3,7 +3,8 @@ import { getColorBySeries } from '../../utils/d3/colorUtils.js'
 import { useD3Alarm } from './useD3Alarm.js'
 
 export function useD3Element(context) {
-  const { width, height, margin, data, xKey, yKey, xType, seriesKey } = context.props
+  const { width, height, margin, data, xKey, yKey, xType, seriesKey, seriesKeyArray } =
+    context.props
   let colorScale
 
   function createColorScale() {
@@ -18,7 +19,7 @@ export function useD3Element(context) {
       chartType,
       innerContent,
       xScale,
-      yScale,
+      getYValue,
       ucl,
       lcl,
       pointSize = 3,
@@ -30,7 +31,7 @@ export function useD3Element(context) {
       keyFn = (d) => d[xKey]
     } = options
 
-    if (!innerContent || !xScale || !yScale) {
+    if (!innerContent || !xScale || !getYValue) {
       console.error('Missing required parameters for drawPoints')
       return
     }
@@ -47,9 +48,7 @@ export function useD3Element(context) {
       .append('circle')
       .attr('class', `point-${seriesKey}`)
       .attr('r', 0)
-      .filter((d) => xScale(d[xKey]) !== undefined && yScale(d[yKey]) !== undefined)
-      // .transition()
-      // .duration(transitionDuration)
+      .filter((d) => xScale(d[xKey]) !== undefined && getYValue(d) !== undefined)
       .attr('cx', (d) =>
         isNaN(xScale(d[xKey]))
           ? null
@@ -57,13 +56,13 @@ export function useD3Element(context) {
             ? xScale(d[xKey]) + xScale.bandwidth() / 2
             : xScale(d[xKey])
       )
-      .attr('cy', (d) => yScale(d[yKey]))
+      .attr('cy', (d) => getYValue(d))
       .attr('r', (d) => (d[seriesKey] === '0' ? 1.5 : pointSize))
       .attr('fill', (d) => {
         if (seriesKey) {
           return d[seriesKey] === '0' ? 'gray' : colorScale(d[seriesKey])
         }
-        const y = d[yKey]
+        const y = getYValue(d)
         if ((ucl && y > Number(ucl)) || (lcl && y < Number(lcl))) {
           return 'red'
         }
@@ -79,8 +78,31 @@ export function useD3Element(context) {
         if (onMouseOut) onMouseOut(event, d, this)
       })
       .on('click', onClick)
-    // .attr('role', 'img')
-    // .attr('aria-label', (d) => `Point at x: ${d[xKey]}, y: ${d[yKey]}`)
+  }
+  function drawStackBars(options = {}) {
+    const { innerContent, xScale, yRightScale, yLeftScale, onMouseOver, onMouseOut, onClick } =
+      options
+    const stack = d3.stack().keys(seriesKeyArray)
+    const layers = stack(data)
+
+    innerContent
+      .append('g')
+      .attr('class', `stack-${seriesKey}`)
+      .selectAll('g')
+      .data(layers)
+      .join('g')
+      .attr('fill', (d) => colorScale(d.key))
+      .selectAll('rect')
+      .data((d) => d.map((value) => ({ value, parentKey: d.key })))
+      .join('rect')
+      .attr('class', (d) => `bar-${d.parentKey}`)
+      .attr('x', (d, i) => {
+        console.log(d, i)
+      })
+      // .attr("x", (d, i) => xScale(timeAry.value[i]))
+      .attr('y', (d) => yLeftScale(d.value[1]))
+      .attr('height', (d) => yLeftScale(d.value[0]) - yLeftScale(d.value[1]))
+      .attr('width', xScale.bandwidth())
   }
   function drawThresholds({ innerContent, yScale, slots }) {
     const thresholdSlots = slots.thresholds?.()
@@ -119,20 +141,21 @@ export function useD3Element(context) {
       }
     })
   }
-  function drawLine({ innerContent, xScale, yScale }) {
+  function drawLine({ innerContent, xScale, getYValue }) {
     innerContent.selectAll(`.line-${seriesKey}`).remove()
     const lineGenerator = d3
       .line()
       .x((d) => {
         return xType === 'band' ? xScale(d[xKey]) + xScale.bandwidth() / 2 : xScale(d[xKey])
       })
-      .y((d) => yScale(d[yKey]))
+      .y((d) => getYValue(d))
       .defined((d) => {
-        return xScale(d[xKey]) !== undefined && yScale(d[yKey]) !== undefined
+        return xScale(d[xKey]) !== undefined && getYValue(d) !== undefined
       })
 
     // Draw line
     // 如果有不同的seriesKey，則繪製不同的line
+    console.log('seriesKey', seriesKey)
     if (seriesKey) {
       createColorScale()
       const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]

@@ -3,8 +3,8 @@ import * as d3 from 'd3'
 
 export function useD3Base(context) {
   const { props, chartContainer, slots } = context
-  let svg, xScale, yScale
-  const { width, height, margin, data, xKey, yKey, xType, seriesKey } = props
+  let svg, xScale, yScale, yLeftScale, yRightScale
+  const { width, height, margin, data, xKey, yKey, xType, seriesKeyArray } = props
 
   const createSvg = () => {
     if (!chartContainer.value) return null
@@ -20,7 +20,7 @@ export function useD3Base(context) {
       .attr('id', 'clipPath')
       .append('rect')
       .attr('x', margin.left)
-      .attr('y', margin.top)
+      .attr('y', 0)
       .attr('width', width - margin.right - margin.left)
       .attr('height', height - margin.bottom - margin.top)
 
@@ -80,10 +80,63 @@ export function useD3Base(context) {
     return { xScale, yScale }
   }
 
-  const createScales = ({ left, right, top, bottom } = {}) => {
+  const createTwoDynamicScales = () => {
+    if (xType === 'band') {
+      xScale = d3
+        .scaleBand()
+        .domain(data.map((d) => d[xKey]))
+        .range([margin.left, width - margin.right])
+        .padding(0.1)
+    } else {
+      xScale = d3
+        .scaleLinear()
+        .domain(d3.extent(data, (d) => d[xKey]))
+        .range([margin.left, width - margin.right])
+    }
+
+    const thresholdSlots = slots.thresholds?.() || []
+    const thresholdValues = thresholdSlots.map((slot) => slot.props?.value).filter(Boolean)
+
+    // Calculate y domain including thresholds
+    // const yRightMin = Math.min(
+    //   d3.min(data, (d) => Number(d[yKey])),
+    //   ...thresholdValues.map((d) => Number(d))
+    // )
+    // const yRightMax = Math.max(
+    //   d3.max(data, (d) => Number(d[yKey])),
+    //   ...thresholdValues.map((d) => Number(d))
+    // )
+    yRightScale = d3
+      .scaleLinear()
+      .domain([0, 1])
+      .range([height - margin.bottom, margin.top])
+      .nice()
+
+    // 要累加值變成domain
+    const yLeftDomain = []
+    data.forEach((d) => {
+      yLeftDomain.push(
+        seriesKeyArray.reduce((acc, key) => (acc === null ? 0 : Number(acc) + Number(d[key])), 0)
+      )
+    })
+    const yLeftMax = Math.max(...yLeftDomain)
+    const yLeftMin = Math.min(...yLeftDomain)
+
+    yLeftScale = d3
+      .scaleLinear()
+      .domain([yLeftMin - yLeftMin * 0.05, yLeftMax + yLeftMax * 0.05])
+      .range([height - margin.bottom, margin.top])
+      .nice()
+
+    return { xScale, yLeftScale, yRightScale }
+  }
+
+  const createScales = ({ left, right, top, bottom, type } = {}) => {
     let isFixed = left === 0 ? true : left && right && top && bottom === 0 ? true : bottom
     if (isFixed) {
       return createFixedScales({ left, right, top, bottom })
+    } else if (type === 'two-y') {
+      return createTwoDynamicScales()
     } else {
       return createDynamicScales()
     }
@@ -147,6 +200,34 @@ export function useD3Base(context) {
       .call(yAxis)
   }
 
+  const drawTwoYAxis = (toLeft) => {
+    svg.selectAll('.y-axis-left').remove()
+    svg.selectAll('.y-axis-right').remove()
+
+    let yAxisLeft = d3
+      .axisLeft(yLeftScale)
+      .ticks(5)
+      .tickFormat((d) => Number(d) * 100 + '%')
+
+    let yAxisRight = d3
+      .axisRight(yRightScale)
+      .ticks(5)
+      .tickFormat((d) => Number(d) * 100 + '%')
+
+    svg
+      .append('g')
+      .attr('class', 'y-axis-left')
+      .style('user-select', 'none')
+      .attr('transform', `translate(${toLeft},0)`)
+      .call(yAxisLeft)
+    svg
+      .append('g')
+      .attr('class', 'y-axis-right')
+      .style('user-select', 'none')
+      .attr('transform', `translate(${width - margin.right},0)`)
+      .call(yAxisRight)
+  }
+
   const initChart = () => {
     svg = createSvg()
     // const scales = createScales()
@@ -159,6 +240,7 @@ export function useD3Base(context) {
     initChart,
     drawXAxis,
     drawYAxis,
+    drawTwoYAxis,
     createScales // 如果需要在外部使用這個函數
   }
 }

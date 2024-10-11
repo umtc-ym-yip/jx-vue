@@ -85,7 +85,11 @@
       </template>
 
       <template #notes>
-        記得使用 setTooltipRef 來設置 tooltip 的 ref，以便內部計算是否超出邊界並做方向轉換。
+        1.記得使用 setTooltipRef 來設置 tooltip 的 ref，以便內部計算是否超出邊界並做方向轉換。
+        <br />
+        2.在tooltip 插槽中可以使用
+        <StoryCode>D3AsyncImage</StoryCode>
+        組件，並利用作用域插槽的<StoryCode>data</StoryCode>傳入當前數據點的圖片資料。
       </template>
 
       <D3TableMapping

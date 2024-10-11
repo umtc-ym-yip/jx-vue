@@ -144,7 +144,7 @@ function drawChart() {
       drawPoints({
         innerContent,
         xScale,
-        yScale,
+        getYValue: (d) => yScale(d[props.yKey]),
         ucl,
         lcl,
         onMouseOver: pointMouseOver(svg),
@@ -185,7 +185,7 @@ function drawChart() {
   drawPoints({
     innerContent,
     xScale,
-    yScale,
+    getYValue: (d) => yScale(d[props.yKey]),
     ucl,
     lcl,
     onMouseOver: pointMouseOver(svg),

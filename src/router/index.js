@@ -12,7 +12,7 @@ import Modal from '../components/stories/Modal.vue'
 import Radio from '../components/stories/Radio.vue'
 import PointTrend from '../components/stories/PointTrend.vue'
 import TableMapping from '../components/stories/TableMapping.vue'
-
+import StackBarTrend from '../components/stories/StackBarTrend.vue'
 import { componentLinks, d3Links } from '@/config/navLinks'
 
 // 創建一個函數來生成路由配置
@@ -101,6 +101,11 @@ const router = createRouter({
       path: '/stories/tablemapping',
       name: 'TableMapping',
       component: TableMapping
+    },
+    {
+      path: '/stories/stackbartrend',
+      name: 'StackBarTrend',
+      component: StackBarTrend
     }
   ]
 })
