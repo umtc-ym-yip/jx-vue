@@ -13,7 +13,14 @@
     <JxIcon v-if="icon" :class="iconClass">{{ icon }}</JxIcon>
     <span v-if="text && !loading" :class="textClass">{{ text }}</span>
     <!-- 之後改成用套件Spin -->
+<<<<<<< HEAD
     <span v-if="loading">Loading...</span>
+=======
+    <span v-if="loading" class="flex items-center">
+      <i class="fas fa-spinner fa-spin mr-2"></i>
+      <span :class="textClass">{{ text }}</span>
+    </span>
+>>>>>>> ff3f097ca01bdd9ac00bb319f6aee267f859c7fd
     <slot></slot>
   </button>
 </template>
