@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import JxIcon from '@/components/JxIcon.vue'
-import JxEmptyStatus from '@/components/JxEmptyStatus.vue'
+import JxButton from './components/JxButton.vue'
 import { navItems } from '@/config/navLinks'
 
 const activeNavItem = ref(null)
@@ -34,6 +34,7 @@ watch(route, () => {
     top: 0
   })
 })
+const buttonNumber = ref(0)
 </script>
 
 <template>

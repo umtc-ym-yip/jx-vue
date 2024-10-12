@@ -1,5 +1,5 @@
 <template>
-  <StoryContainer title="JxButton 元件">
+  <StoryContainer title="JxButton 按鈕組件">
     <StorySection title="按鈕大小">
       <template #description>
         <p class="text-gray-700">
@@ -204,6 +204,76 @@
         <JxButton text="模擬載入" color="primary" :loading="isLoading" @click="loadingClick" />
       </div>
     </StorySection>
+
+    <StorySection title="Badge 功能">
+      <template #description>
+        JxButton 組件支持顯示 badge，可用於展示通知數量或狀態指示器。
+      </template>
+
+      <template #usage>
+        使用 <StoryCode>hasBadge</StoryCode>, <StoryCode>badgeText</StoryCode>, 和
+        <StoryCode>badgeBgColor</StoryCode> 屬性來控制 badge 的顯示。
+      </template>
+
+      <template #props>
+        <StoryList>
+          <li>
+            <span class="font-semibold">hasBadge:</span> 是否顯示 badge，類型為 Boolean，默認為
+            false
+          </li>
+          <li>
+            <span class="font-semibold">badgeText:</span> badge 顯示的文本，類型為 String 或 Number
+          </li>
+          <li><span class="font-semibold">badgeBgColor:</span> badge 的背景顏色，類型為 String</li>
+          <li>
+            <span class="font-semibold">badgeClass:</span> 應用於 badge 的額外 CSS 類，類型為 String
+          </li>
+        </StoryList>
+      </template>
+
+      <template #code>
+        <pre>
+        &lt;JxButton 
+          text="通知" 
+          :hasBadge="true" 
+          badgeText="5" 
+          badgeBgColor="bg-red-500"
+        /&gt;
+        </pre>
+      </template>
+
+      <JxButton text="通知" :hasBadge="true" badgeText="5" badgeBgColor="bg-red-500" />
+    </StorySection>
+
+    <StorySection title="Badge 動畫效果">
+      <template #description>
+        當 badgeText 發生變化時，badge
+        會自動應用動畫效果。原有數字會向上移動並淡出，新數字會從下方出現。
+      </template>
+
+      <template #usage> 動態更改 <StoryCode>badgeText</StoryCode> 的值來觀察動畫效果。 </template>
+
+      <template #code>
+        <pre>
+        &lt;JxButton 
+          text="動態 Badge" 
+          :hasBadge="true" 
+          :badgeText="dynamicBadgeText" 
+          badgeBgColor="bg-blue-500"
+          @click="updateBadge"
+        /&gt;
+        </pre>
+      </template>
+
+      <JxButton
+        text="動態 Badge"
+        :hasBadge="true"
+        :badgeText="dynamicBadgeText"
+        badgeBgColor="bg-blue-500"
+        @click="updateBadge"
+      />
+      <p class="mt-2 text-sm text-gray-600">點擊按鈕來更新 badge 數字</p>
+    </StorySection>
   </StoryContainer>
   <JxAlert v-model:show="alertConfig.show" v-bind="alertConfig" />
 </template>
@@ -226,5 +296,11 @@ function loadingClick() {
     showAlert('success', '載入成功')
     isLoading.value = false
   }, 3000)
+}
+
+const dynamicBadgeText = ref(1)
+
+function updateBadge() {
+  dynamicBadgeText.value += 1
 }
 </script>

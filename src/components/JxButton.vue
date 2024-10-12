@@ -7,22 +7,36 @@
       colorClass,
       { 'flex-row-reverse': iconPosition === 'right' },
       { 'opacity-50 cursor-not-allowed': disabled || loading },
-      { 'cursor-progress': loading }
+      { 'cursor-progress': loading },
+      { relative: hasBadge }
     ]"
   >
     <JxIcon v-if="icon" :class="iconClass">{{ icon }}</JxIcon>
     <span v-if="text && !loading" :class="textClass">{{ text }}</span>
-    <!-- 之後改成用套件Spin -->
     <span v-if="loading" class="flex items-center">
       <i class="fas fa-spinner fa-spin mr-2"></i>
       <span :class="textClass">{{ text }}</span>
     </span>
+    <span
+      v-if="hasBadge && (badgeText === 0 || badgeText) && badgeBgColor"
+      class="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2"
+      :class="[
+        badgeClass,
+        {
+          'rounded-full': String(badgeText).length,
+          ' rounded-xl': String(badgeText).length > 1
+        }
+      ]"
+      ><p class="transition-all text-xs px-2 py-1" :class="animationClass">
+        {{ displayedBadgeText }}
+      </p></span
+    >
     <slot></slot>
   </button>
 </template>
 
 <script setup>
-import { computed, defineEmits } from 'vue'
+import { ref, computed, watch } from 'vue'
 import JxIcon from './JxIcon.vue'
 
 const props = defineProps({
@@ -64,6 +78,22 @@ const props = defineProps({
   loading: {
     type: Boolean,
     default: false
+  },
+  hasBadge: {
+    type: Boolean,
+    default: false
+  },
+  badgeText: {
+    type: [String, Number],
+    default: 0
+  },
+  badgeBgColor: {
+    type: String,
+    default: 'bg-error-light'
+  },
+  badgeTextColor: {
+    type: String,
+    default: 'text-white'
   }
 })
 
@@ -97,6 +127,27 @@ const textClass = computed(() => {
   return props.icon ? (props.iconPosition === 'left' ? 'ml-2' : 'mr-2') : ''
 })
 
+const badgeClass = computed(() => {
+  return `${props.badgeBgColor} ${props.badgeTextColor}`
+})
+
+const displayedBadgeText = ref(props.badgeText)
+const animationClass = ref('')
+
+watch(
+  () => props.badgeText,
+  (newValue, oldValue) => {
+    if (newValue !== oldValue) {
+      animationClass.value = 'opacity-0 -translate-y-1/2'
+
+      setTimeout(() => {
+        displayedBadgeText.value = newValue
+        animationClass.value = 'opacity-100 '
+      }, 200)
+    }
+  },
+  { immediate: true }
+)
 const emit = defineEmits(['click'])
 
 const handleClick = (event) => {
