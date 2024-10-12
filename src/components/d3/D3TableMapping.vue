@@ -120,9 +120,9 @@ function drawChart() {
 
   const brush = createBrush((event) =>
     brushEnd(event, xScale, yScale, () => {
-      if (props.hasLine) {
-        drawLine({ innerContent, xScale, yScale })
-      }
+      // if (props.hasLine) {
+      //   drawLine({ innerContent, xScale, yScale })
+      // }
       innerContent.selectAll('path').remove()
       innerContent
         .selectAll(`layout-path`)

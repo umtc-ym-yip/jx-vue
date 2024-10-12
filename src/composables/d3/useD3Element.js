@@ -7,11 +7,13 @@ export function useD3Element(context) {
     context.props
   let colorScale
 
-  function createColorScale() {
-    if (seriesKey) {
-      const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
-      colorScale = d3.scaleOrdinal().domain(uniqueSeries).range(getColorBySeries(uniqueSeries))
-    }
+  if (seriesKey) {
+    const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
+    colorScale = d3.scaleOrdinal().domain(uniqueSeries).range(getColorBySeries(uniqueSeries))
+  } else if (seriesKeyArray) {
+    colorScale = d3.scaleOrdinal().range(getColorBySeries(seriesKeyArray))
+  } else {
+    colorScale = d3.scaleOrdinal().range(['steelblue'])
   }
 
   function drawPoints(options = {}) {
@@ -27,7 +29,6 @@ export function useD3Element(context) {
       onMouseOut,
       onClick,
       pointShape = 'circle',
-      transitionDuration = 300,
       keyFn = (d) => d[xKey]
     } = options
 
@@ -36,17 +37,14 @@ export function useD3Element(context) {
       return
     }
 
-    if (seriesKey) {
-      createColorScale()
-    }
-    innerContent.selectAll(`.point-${seriesKey}`).remove()
-    const points = innerContent.selectAll(`.point-${seriesKey}`).data(data, keyFn)
+    innerContent.selectAll(`.point`).remove()
+    const points = innerContent.selectAll(`.point`).data(data, keyFn)
 
     // Enter + Update
     points
       .enter()
-      .append('circle')
-      .attr('class', `point-${seriesKey}`)
+      .append(pointShape || 'circle')
+      .attr('class',(d)=> `point point-${d[seriesKey]}`)
       .attr('r', 0)
       .filter((d) => xScale(d[xKey]) !== undefined && getYValue(d) !== undefined)
       .attr('cx', (d) =>
@@ -80,31 +78,43 @@ export function useD3Element(context) {
       .on('click', onClick)
   }
   function drawStackBars(options = {}) {
-    const { innerContent, xScale, yRightScale, yLeftScale, onMouseOver, onMouseOut, onClick } =
-      options
+    const { innerContent, xScale, getYValue, onMouseOver, onMouseOut, onClick } = options
+
+    innerContent.selectAll(`.bar-group`).remove()
+
     const stack = d3.stack().keys(seriesKeyArray)
     const layers = stack(data)
 
+    const xScaleArray = data.map((d) => d[xKey])
+
     innerContent
       .append('g')
-      .attr('class', `stack-${seriesKey}`)
+      .attr('class', `stack`)
       .selectAll('g')
       .data(layers)
       .join('g')
+      .attr('class',(d)=>`bar-group bar-group-${d.key}`)
       .attr('fill', (d) => colorScale(d.key))
       .selectAll('rect')
-      .data((d) => d.map((value) => ({ value, parentKey: d.key })))
+      .data((d) => d.map((value) => ({ value, key: d.key })))
       .join('rect')
-      .attr('class', (d) => `bar-${d.parentKey}`)
-      .attr('x', (d, i) => {
-        console.log(d, i)
-      })
-      // .attr("x", (d, i) => xScale(timeAry.value[i]))
-      .attr('y', (d) => yLeftScale(d.value[1]))
-      .attr('height', (d) => yLeftScale(d.value[0]) - yLeftScale(d.value[1]))
+      .attr('rx', 1)
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1)
+      .attr('class', (d) => `bar bar-${d.key}`)
+      .attr('x', (d, i) => xScale(xScaleArray[i]))
+      .attr('y', (d) => getYValue(d.value[1]))
+      .attr('height', (d) => getYValue(d.value[0]) - getYValue(d.value[1]))
       .attr('width', xScale.bandwidth())
+      .on('mouseover', function (event, d) {
+        if (onMouseOver) onMouseOver(event, d, this)
+      })
+      .on('mouseout', function (event, d) {
+        if (onMouseOut) onMouseOut(event, d, this)
+      })
+      .on('click', onClick)
   }
-  function drawThresholds({ innerContent, yScale, slots }) {
+  function drawThresholds({ innerContent, getYValue, slots }) {
     const thresholdSlots = slots.thresholds?.()
     if (!thresholdSlots) return
     innerContent.selectAll('.threshold,.threshold-text').remove()
@@ -113,7 +123,7 @@ export function useD3Element(context) {
       const threshold = slot.props
       if (!threshold || !threshold.value) return
 
-      const y = yScale(threshold.value)
+      const y = getYValue(threshold.value)
 
       innerContent
         .append('line')
@@ -142,7 +152,7 @@ export function useD3Element(context) {
     })
   }
   function drawLine({ innerContent, xScale, getYValue }) {
-    innerContent.selectAll(`.line-${seriesKey}`).remove()
+    innerContent.selectAll(`.line`).remove()
     const lineGenerator = d3
       .line()
       .x((d) => {
@@ -155,49 +165,54 @@ export function useD3Element(context) {
 
     // Draw line
     // 如果有不同的seriesKey，則繪製不同的line
-    console.log('seriesKey', seriesKey)
     if (seriesKey) {
-      createColorScale()
       const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
       uniqueSeries.forEach((item) => {
         innerContent
           .append('path')
           .datum(data.filter((d) => d[seriesKey] === item))
-          .attr('class', `line-${seriesKey}`)
+          .attr('class',(d)=> `line line-${d[seriesKey]}`)
           .attr('fill', 'none')
           .attr('stroke', colorScale(item))
           .attr('stroke-width', 1.5)
           .attr('d', lineGenerator)
       })
+    } else {
+      innerContent
+        .append('path')
+        .datum(data)
+        .attr('class', `line`)
+        .attr('d', lineGenerator)
+        .attr('fill', 'none')
+        .attr('stroke', colorScale())
+        .attr('stroke-width', 2)
     }
   }
-  function drawLegend(options = {}) {
-    const { svg, onRectMouseOver, onRectMouseOut, onTextMouseOver, onTextMouseOut, onClick } =
-      options
-    if (!seriesKey) return
-    createColorScale()
-    const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
-    const rectSize = 10
-    const rectFirstLoc = 80
-    const textPadding = 5
-    const itemSpacing = 30
-    const fontSize = 16
 
-    const rectSavedAry = [] ///儲存每個字串加上rect寬度加上文字padding
+  function calculateLegendLayout(svg, series, width, height, options = {}) {
+    const {
+      rectSize = 10,
+      rectFirstLoc = 80,
+      textPadding = 5,
+      itemSpacing = 30,
+      fontSize = 16
+    } = options
+
+    const rectSavedAry = []
     const rectSaveSumXAry = []
     const rectSaveSumYAry = []
 
-    // 計算每個 legend 項的寬度
-    uniqueSeries.forEach((series) => {
+    // 计算每个 legend 项的宽度
+    series.forEach((item) => {
       const tempText = svg.append('text').style('font-size', `${fontSize}px`)
-      const curTextWidth = tempText.text(series).node().getComputedTextLength()
+      const curTextWidth = tempText.text(item).node().getComputedTextLength()
       tempText.remove()
       rectSavedAry.push(curTextWidth + rectSize + textPadding)
     })
 
-    // 計算 legend 的位置
+    // 计算 legend 的位置
     let maxY = 0
-    const legendItems = uniqueSeries.map((series, i) => {
+    const legendItems = series.map((item, i, self) => {
       let x, y
       if (i === 0) {
         x = rectFirstLoc
@@ -210,7 +225,7 @@ export function useD3Element(context) {
         const newX = prevX + prevWidth + itemSpacing
 
         if (newX + rectSavedAry[i] >= width) {
-          // 換行
+          // 换行
           x = rectFirstLoc
           y = rectSaveSumYAry[rectSaveSumYAry.length - 1] + fontSize + textPadding
           rectSaveSumYAry.push(y)
@@ -222,13 +237,37 @@ export function useD3Element(context) {
       rectSaveSumXAry.push(x)
       maxY = Math.max(maxY, y)
 
-      return { [seriesKey]: series, x, y }
+      return { [seriesKey ? seriesKey : 'key']: item, x, y }
     })
 
     const newHeight = maxY + fontSize + textPadding
+
+    return {
+      legendItems,
+      newHeight,
+      rectSize,
+      textPadding,
+      fontSize
+    }
+  }
+
+  function drawLegend(options = {}) {
+    const { svg, onRectMouseOver, onRectMouseOut, onTextMouseOver, onTextMouseOut, onClick } =
+      options
+    if (!seriesKey) return
+
+    const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
+
+    const { legendItems, newHeight, rectSize, textPadding, fontSize } = calculateLegendLayout(
+      svg,
+      uniqueSeries,
+      width,
+      height
+    )
+
     svg.attr('height', newHeight)
 
-    // 繪製 legend
+    // 绘制 legend
     const legend = svg.append('g').attr('class', 'legend')
 
     const tagWrap = legend
@@ -240,13 +279,16 @@ export function useD3Element(context) {
 
     tagWrap
       .append('rect')
-      .attr('class', `tags-legend-rect-${seriesKey}`)
+      .attr('class', (d) => `tags-legend-rect tags-legend-rect-${d[seriesKey]}`)
       .attr('x', (d) => d.x)
       .attr('y', (d) => d.y)
       .attr('width', rectSize)
       .attr('height', rectSize)
       .attr('fill', (d) => (d[seriesKey] === '0' ? 'gray' : colorScale(d[seriesKey])))
       .attr('cursor', 'pointer')
+      .attr('rx', 2)
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 1)
       .on('mouseover', function (event, d) {
         if (onRectMouseOver) onRectMouseOver(event, d, this)
       })
@@ -257,26 +299,98 @@ export function useD3Element(context) {
 
     tagWrap
       .append('text')
-      .attr('class', `tags-legend-text-${seriesKey}`)
+      .attr('class',(d) =>`tags-legend-text tags-legend-text-${d[seriesKey]}`)
       .attr('x', (d) => d.x + rectSize + textPadding)
-      .attr('y', (d) => d.y + rectSize)
+      .attr('y', (d) => d.y + rectSize / 2)
       .attr('fill', 'black')
       .style('font-size', `${fontSize}px`)
       .style('user-select', 'none')
+      .style('dominant-baseline', 'middle')
       .text((d) => d[seriesKey])
       .attr('cursor', 'pointer')
       .on('mouseover', function (event, d) {
+        d3.select(this).transition().duration(200).style('font-weight', 'bold')
         if (onTextMouseOver) onTextMouseOver(event, d, this)
       })
       .on('mouseout', function (event, d) {
+        d3.select(this).transition().duration(200).style('font-weight', 'normal')
         if (onTextMouseOut) onTextMouseOut(event, d, this)
       })
       .on('click', onClick)
   }
+
+  function drawStackLegend(options = {}) {
+    const { svg, onRectMouseOver, onRectMouseOut, onTextMouseOver, onTextMouseOut, onClick } =
+      options
+    if (!seriesKeyArray) return
+
+    const { legendItems, newHeight, rectSize, textPadding, fontSize } = calculateLegendLayout(
+      svg,
+      seriesKeyArray,
+      width,
+      height
+    )
+
+    svg.attr('height', newHeight)
+
+    // 绘制 legend
+    const legend = svg.append('g').attr('class', 'legend')
+
+    const tagWrap = legend
+      .selectAll('.tags-legend')
+      .data(legendItems)
+      .enter()
+      .append('g')
+      .attr('class', 'tags-legend')
+
+    tagWrap
+      .append('rect')
+      .attr('class', (d) => `tags-legend-rect-${d.key}`)
+      .attr('x', (d) => d.x)
+      .attr('y', (d) => d.y)
+      .attr('width', rectSize)
+      .attr('height', rectSize)
+      .attr('fill', (d) => colorScale(d.key))
+      .attr('cursor', 'pointer')
+      .attr('rx', 2)
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 1)
+      .on('mouseover', function (event, d) {
+        if (onRectMouseOver) onRectMouseOver(event, d, this)
+      })
+      .on('mouseout', function (event, d) {
+        if (onRectMouseOut) onRectMouseOut(event, d, this)
+      })
+      .on('click', onClick)
+
+    tagWrap
+      .append('text')
+      .attr('class', (d) => `tags-legend-text-${d.key}`)
+      .attr('x', (d) => d.x + rectSize + textPadding)
+      .attr('y', (d) => d.y + rectSize / 2)
+      .attr('fill', 'black')
+      .style('font-size', `${fontSize}px`)
+      .style('user-select', 'none')
+      .style('dominant-baseline', 'middle')
+      .text((d) => d.key)
+      .attr('cursor', 'pointer')
+      .on('mouseover', function (event, d) {
+        d3.select(this).transition().duration(200).style('font-weight', 'bold')
+        if (onTextMouseOver) onTextMouseOver(event, d, this)
+      })
+      .on('mouseout', function (event, d) {
+        d3.select(this).transition().duration(200).style('font-weight', 'normal')
+        if (onTextMouseOut) onTextMouseOut(event, d, this)
+      })
+      .on('click', onClick)
+  }
+
   return {
     drawPoints,
     drawThresholds,
     drawLine,
-    drawLegend
+    drawLegend,
+    drawStackBars,
+    drawStackLegend
   }
 }

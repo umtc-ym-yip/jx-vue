@@ -10,6 +10,7 @@ export function useD3Interaction(context) {
   const tooltipShow = ref(false)
   const tooltipLoc = ref({ x: 0, y: 0 })
   const tooltipData = ref({})
+  const tooltopStatus = ref('')
   const hiddenTooltip = ref(false)
   const externalTooltipRef = ref(null)
   const setTooltipRef = (el) => {
@@ -18,14 +19,15 @@ export function useD3Interaction(context) {
   // Tooltip
 
   // Point
-  function pointMouseOver(svg) {
+  function pointMouseOver(svg, innerContent, pointSize) {
     return function (event, d, element) {
-      d3.select(element).transition().duration(200).attr('r', 7)
+      d3.select(element).transition().duration(200).attr('r', pointSize)
       const [x, y] = d3.pointer(event, chartContainer.value)
 
       const svgWidth = svg.node().getBoundingClientRect().width
       tooltipLoc.value = { x: 0, y: 0 }
       tooltipData.value = d
+      tooltopStatus.value = 'point'
       tooltipShow.value = true
       nextTick(() => {
         let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
@@ -35,38 +37,84 @@ export function useD3Interaction(context) {
         tooltipLoc.value = { x: tooltipX, y: tooltipY }
         hiddenTooltip.value = false
       })
-      otherPointFade(event, d)
-      otherLineFade(event, d)
+      otherPointFade(event, d, innerContent)
+      otherLineFade(event, d, innerContent)
     }
   }
-  function pointMouseOut() {
+  function pointMouseOut(innerContent, pointSize) {
     return function (event, d, element) {
-      d3.select(element).transition().duration(200).attr('r', 3)
+      d3.select(element).transition().duration(200).attr('r', pointSize)
       tooltipShow.value = false
       hiddenTooltip.value = true
-      otherPointReset(event, d)
-      otherLineReset(event, d)
+      otherPointReset(event, d, innerContent,pointSize)
+      otherLineReset(event, d, innerContent)
+    }
+  }
+
+  function stackBarMouseOver(svg, innerContent) {
+    return function (event, d, element) {
+      d3.select(element).transition().duration(200).attr('transform', 'scale(1.005)')
+
+      const [x, y] = d3.pointer(event, chartContainer.value)
+
+      const svgWidth = svg.node().getBoundingClientRect().width
+      tooltipLoc.value = { x: 0, y: 0 }
+      tooltipData.value = d
+      tooltopStatus.value = 'stack'
+      tooltipShow.value = true
+      nextTick(() => {
+        let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
+        let tooltipX = x + tooltipWidth > svgWidth ? x - tooltipWidth - 10 : x + 10
+        let tooltipY = y - 30
+
+        tooltipLoc.value = { x: tooltipX, y: tooltipY }
+        hiddenTooltip.value = false
+      })
+      othersStackBarFade(event, d, innerContent)
+    }
+  }
+  function stackBarMouseOut(innerContent) {
+    return function (event, d, element) {
+      d3.select(element).transition().duration(200).attr('transform', 'scale(1)')
+      tooltipShow.value = false
+      hiddenTooltip.value = true
+      othersStackBarReset(event, d, innerContent)
     }
   }
 
   // 觸碰legend
-  function legendMouseOver() {
+  function legendMouseOver(innerContent) {
     return function (event, d) {
-      otherLegendFade(event, d)
-      otherPointFade(event, d)
-      otherLineFade(event, d)
+      // otherLegendFade(event, d, innerContent)
+      otherPointFade(event, d, innerContent)
+      otherLineFade(event, d, innerContent)
     }
   }
-  function legendMouseOut() {
+  function stackLegendMouseOver(innerContent) {
     return function (event, d) {
-      otherLegendReset(event, d)
-      otherPointReset(event, d)
-      otherLineReset(event, d)
+      // otherLegendFade(event, d)
+      othersStackBarFade(event, d, innerContent)
+      // otherLineFade(event, d)
+    }
+  }
+  function stackLegendMouseOut(innerContent) {
+    return function (event, d) {
+      // otherLegendFade(event, d)
+      othersStackBarReset(event, d, innerContent)
+      // otherLineFade(event, d)
     }
   }
 
-  function otherPointFade(event, d) {
-    const allElements = d3.selectAll(`.point-${seriesKey}`)
+  function legendMouseOut(innerContent) {
+    return function (event, d) {
+      // otherLegendReset(event, d,innerContent)
+      otherPointReset(event, d, innerContent)
+      otherLineReset(event, d, innerContent)
+    }
+  }
+
+  function otherPointFade(event, d, innerContent) {
+    const allElements = innerContent.selectAll(`.point`)
     const othersElements = allElements.filter((i) => i[seriesKey] !== d[seriesKey])
     othersElements.each((d, i, nodes) => {
       d3.select(nodes[i]).attr('stroke-width', 0)
@@ -79,11 +127,10 @@ export function useD3Interaction(context) {
     })
   }
 
-  function otherPointReset(event, d) {
+  function otherPointReset(event, d, innerContent) {
     // 恢復原本大小
-    d3.select(event.target).transition().duration(200).attr('r', 3)
 
-    const allElements = d3.selectAll(`.point-${seriesKey}`)
+    const allElements = innerContent.selectAll(`.point`)
     const othersElements = allElements.filter((i) => i[seriesKey] !== d[seriesKey])
     othersElements.each((d, i, nodes) => {
       d3.select(nodes[i]).attr('stroke-width', 1)
@@ -95,8 +142,8 @@ export function useD3Interaction(context) {
       }
     })
   }
-  function otherLineFade(event, d) {
-    const allElements = d3.selectAll(`.line-${seriesKey}`)
+  function otherLineFade(event, d, innerContent) {
+    const allElements = innerContent.selectAll(`.line`)
     const othersElements = allElements.filter((i) => i[0]?.[seriesKey] !== d[seriesKey])
     othersElements.each((d, i, nodes) => {
       const currentStroke = d3.select(nodes[i]).attr('stroke')
@@ -105,8 +152,8 @@ export function useD3Interaction(context) {
       d3.select(nodes[i]).attr('stroke', color)
     })
   }
-  function otherLineReset(event, d) {
-    const allElements = d3.selectAll(`.line-${seriesKey}`)
+  function otherLineReset(event, d, innerContent) {
+    const allElements = innerContent.selectAll(`.line`)
     const othersElements = allElements.filter((i) => i[0]?.[seriesKey] !== d[seriesKey])
     othersElements.each((d, i, nodes) => {
       const currentStroke = d3.select(nodes[i]).attr('stroke')
@@ -115,40 +162,66 @@ export function useD3Interaction(context) {
       d3.select(nodes[i]).attr('stroke', color)
     })
   }
-  function otherLegendFade(event, d) {
-    const legend = d3.selectAll(`.tags-legend-rect-${seriesKey}`)
-    const othersLegend = legend.filter((i) => i[seriesKey] !== d[seriesKey])
 
-    othersLegend.each((d, i, nodes) => {
-      d3.select(nodes[i]).attr('fill', (d) => {
-        const currentColor = d3.select(nodes[i]).attr('fill')
-        const targetColor = d3.color(currentColor)
-        targetColor.opacity = 0.1
-        return targetColor
-      })
-    })
-    //其他text變淺
-    const text = d3.selectAll(`.tags-legend-text-${seriesKey}`)
-    text.filter((i) => i[seriesKey] !== d[seriesKey]).attr('fill', 'gray')
-  }
-  function otherLegendReset(event, d) {
-    const legend = d3.selectAll(`.tags-legend-rect-${seriesKey}`)
-    const othersLegend = legend.filter((i) => i[seriesKey] !== d[seriesKey])
-    othersLegend.attr('fill', (d, i, nodes) => {
+  function othersStackBarFade(event, d, innerContent) {
+    const allBars = innerContent.selectAll('.bar-group')
+    const othersBars = allBars.filter((i) => i.key !== d.key)
+    othersBars.each((d, i, nodes) => {
       const currentColor = d3.select(nodes[i]).attr('fill')
-      const targetColor = d3.color(currentColor)
-      targetColor.opacity = 1
-      return targetColor
+      if (currentColor) {
+        const color = d3.color(currentColor)
+        color.opacity = 0.2
+        d3.select(nodes[i]).attr('fill', color)
+      }
     })
-    const text = d3.selectAll(`.tags-legend-text-${seriesKey}`)
-    text.filter((i) => i[seriesKey] !== d[seriesKey]).attr('fill', 'black')
   }
+  function othersStackBarReset(event, d, innerContent) {
+    const allBars = innerContent.selectAll('.bar-group')
+    const othersBars = allBars.filter((i) => i.key !== d.parentKey)
+    othersBars.each((d, i, nodes) => {
+      const currentColor = d3.select(nodes[i]).attr('fill')
+      if (currentColor) {
+        const color = d3.color(currentColor)
+        color.opacity = 1
+        d3.select(nodes[i]).attr('fill', color)
+      }
+    })
+  }
+  // function otherLegendFade(event, d,innerContent) {
+  //   const legend = innerContent.selectAll(`.tags-legend-rect`)
+  //   const othersLegend = legend.filter((i) => i[seriesKey] !== d[seriesKey])
+
+  //   othersLegend.each((d, i, nodes) => {
+  //     d3.select(nodes[i]).attr('fill', (d) => {
+  //       const currentColor = d3.select(nodes[i]).attr('fill')
+  //       const targetColor = d3.color(currentColor)
+  //       targetColor.opacity = 0.1
+  //       return targetColor
+  //     })
+  //   })
+  //   //其他text變淺
+  //   const text = innerContent.selectAll(`.tags-legend-text`)
+  //   text.filter((i) => i[seriesKey] !== d[seriesKey]).attr('fill', 'gray')
+  // }
+  // function otherLegendReset(event, d,innerContent) {
+  //   const legend = innerContent.selectAll(`.tags-legend-rect`)
+  //   const othersLegend = legend.filter((i) => i[seriesKey] !== d[seriesKey])
+  //   othersLegend.attr('fill', (d, i, nodes) => {
+  //     const currentColor = d3.select(nodes[i]).attr('fill')
+  //     const targetColor = d3.color(currentColor)
+  //     targetColor.opacity = 1
+  //     return targetColor
+  //   })
+  //   const text = innerContent.selectAll(`.tags-legend-text`)
+  //   text.filter((i) => i[seriesKey] !== d[seriesKey]).attr('fill', 'black')
+  // }
 
   return {
     tooltip,
     tooltipShow,
     tooltipLoc,
     tooltipData,
+    tooltopStatus,
     hiddenTooltip,
     setTooltipRef,
     pointMouseOver,
@@ -156,6 +229,10 @@ export function useD3Interaction(context) {
     pointMouseOut,
     otherPointReset,
     legendMouseOver,
-    legendMouseOut
+    stackLegendMouseOver,
+    stackLegendMouseOut,
+    legendMouseOut,
+    stackBarMouseOver,
+    stackBarMouseOut
   }
 }

@@ -15,11 +15,21 @@
         ref="tooltip"
         class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
         :class="{ 'opacity-0': hiddenTooltip }"
-        v-if="tooltipShow"
+        v-if="tooltipShow && tooltopStatus === 'stack'"
+        :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
+      >
+        缺點: {{ tooltipData.key }}<br />
+        不良率: {{ (tooltipData.value.data[tooltipData.key] * 100).toFixed(2) + '%' }}
+      </div>
+      <div
+        ref="tooltip"
+        class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
+        :class="{ 'opacity-0': hiddenTooltip }"
+        v-if="tooltipShow && tooltopStatus === 'point'"
         :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
       >
         {{ props.xKey }}: {{ tooltipData[props.xKey] }}<br />
-        {{ props.yKey }}: {{ tooltipData[props.yKey] }}
+        {{ props.yKey }}: {{ (tooltipData[props.yKey] * 100).toFixed(1) + '%' }}
       </div>
     </slot>
     <slot name="thresholds"></slot>
@@ -95,7 +105,8 @@ const slots = useSlots()
 const context = useD3Context(props, chartContainer, slots)
 
 const { initChart, drawXAxis, drawTwoYAxis, createScales } = useD3Base(context)
-const { drawPoints, drawStackBars, drawThresholds, drawLine, drawLegend } = useD3Element(context)
+const { drawPoints, drawStackBars, drawThresholds, drawLine, drawStackLegend } =
+  useD3Element(context)
 const { createAlarmLimit } = useD3Alarm()
 const alarmLimit = createAlarmLimit(slots)
 const {
@@ -103,12 +114,15 @@ const {
   tooltipShow,
   tooltipLoc,
   tooltipData,
+  tooltopStatus,
   hiddenTooltip,
   setTooltipRef,
+  stackBarMouseOver,
+  stackBarMouseOut,
+  stackLegendMouseOver,
+  stackLegendMouseOut,
   pointMouseOver,
-  pointMouseOut,
-  legendMouseOver,
-  legendMouseOut
+  pointMouseOut
 } = useD3Interaction(context)
 
 const { createBrush, brushEnd, resetZoom, resetBtnShow } = useZoom(context)
@@ -132,31 +146,39 @@ function drawChart() {
   // 在SVG加上遮罩
   const innerContent = svg.append('g').attr('clip-path', 'url(#clipPath)')
 
-  //   const brush = createBrush((event) =>
-  //     brushEnd(event, xScale, yScale, () => {
-  //       if (props.hasLine) {
-  //         drawLine({ innerContent, xScale, yScale })
-  //       }
-  //       drawPoints({
-  //         innerContent,
-  //         xScale,
-  //         yScale,
-  //         ucl,
-  //         lcl,
-  //         onMouseOver: pointMouseOver(svg),
-  //         onMouseOut: pointMouseOut(),
-  //         onRectMouseOver: legendMouseOver(),
-  //         onRectMouseOut: legendMouseOut(),
-  //         onTextMouseOver: legendMouseOver(),
-  //         onTextMouseOut: legendMouseOut()
-  //       })
-  //       drawXAxis(props.xAxisType, props.xAxisSampleRate)
-  //       drawYAxis(null, props.margin.left)
-  //       drawThresholds({ innerContent, yScale, slots })
-  //       brushContent.call(brush.move, null)
+  // const brush = createBrush((event) =>
+  //   brushEnd(event, xScale, [yLeftScale, yRightScale], () => {
+  //     if (props.hasLine) {
+  //       drawLine({ innerContent, xScale, getYValue: (d) => yRightScale(d[props.yKey]) })
+  //     }
+  //     drawPoints({
+  //       innerContent,
+  //       xScale,
+  //       getYValue: (d) => yRightScale(d[props.yKey]),
+  //       ucl,
+  //       lcl,
+  //       onMouseOver: pointMouseOver(svg, innerContent),
+  //       onMouseOut: pointMouseOut(innerContent)
+  //       // onRectMouseOver: legendMouseOver(innerContent),
+  //       // onRectMouseOut: legendMouseOut(innerContent),
+  //       // onTextMouseOver: legendMouseOver(innerContent),
+  //       // onTextMouseOut: legendMouseOut(innerContent)
   //     })
-  //   )
-  //   brushContent = innerContent.append('g').call(brush)
+  //     drawXAxis(props.xAxisType, props.xAxisSampleRate)
+  //     drawTwoYAxis(props.margin.left)
+  //     drawLine({ innerContent, xScale, getYValue: (d) => yRightScale(d[props.yKey]) })
+  //     drawStackBars({
+  //       innerContent,
+  //       xScale,
+  //       getYValue: (d) => yLeftScale(d),
+  //       onMouseOver: stackBarMouseOver(svg, innerContent),
+  //       onMouseOut: stackBarMouseOut(innerContent)
+  //     })
+  //     // drawThresholds({ innerContent, yScale, slots })
+  //     brushContent.call(brush.move, null)
+  //   })
+  // )
+  // brushContent = innerContent.append('g').call(brush)
 
   // 繪製Title
   svg
@@ -171,10 +193,18 @@ function drawChart() {
   // 繪製X,Y軸
   drawXAxis(props.xAxisType, props.xAxisSampleRate)
   drawTwoYAxis(props.margin.left)
-  drawLine({ innerContent, xScale, getYValue: (d) => yRightScale(d[props.yKey]) })
-  //   drawYAxis(null, props.margin.left)
+
+  drawStackBars({
+    innerContent,
+    xScale,
+    getYValue: (d) => yLeftScale(d),
+    onMouseOver: stackBarMouseOver(svg, innerContent),
+    onMouseOut: stackBarMouseOut(innerContent)
+  })
   // 繪製管制線
-  //   drawThresholds({ innerContent, yScale, slots })
+  drawThresholds({ innerContent, getYValue: (d) => yRightScale(d), slots })
+  drawLine({ innerContent, xScale, getYValue: (d) => yRightScale(d[props.yKey]) })
+
   // 繪製連線
   //   if (props.hasLine) {
   //     drawLine({ innerContent, xScale, yScale })
@@ -184,23 +214,24 @@ function drawChart() {
     innerContent,
     xScale,
     getYValue: (d) => yRightScale(d[props.yKey]),
+    pointSize:5,
     ucl,
     lcl,
-    onMouseOver: pointMouseOver(svg),
-    onMouseOut: pointMouseOut(),
-    onRectMouseOver: legendMouseOver(),
-    onRectMouseOut: legendMouseOut(),
-    onTextMouseOver: legendMouseOver(),
-    onTextMouseOut: legendMouseOut()
+    onMouseOver: pointMouseOver(svg, innerContent,7),
+    onMouseOut: pointMouseOut(innerContent,5)
+    // onRectMouseOver: legendMouseOver(innerContent),
+    // onRectMouseOut: legendMouseOut(innerContent),
+    // onTextMouseOver: legendMouseOver(innerContent),
+    // onTextMouseOut: legendMouseOut(innerContent)
   })
   // 繪製Legend
-  //   drawLegend({
-  //     svg,
-  //     onRectMouseOver: legendMouseOver(),
-  //     onRectMouseOut: legendMouseOut(),
-  //     onTextMouseOver: legendMouseOver(),
-  //     onTextMouseOut: legendMouseOut()
-  //   })
+  drawStackLegend({
+    svg,
+    onRectMouseOver: stackLegendMouseOver(innerContent),
+    onRectMouseOut: stackLegendMouseOut(innerContent),
+    onTextMouseOver: stackLegendMouseOver(innerContent),
+    onTextMouseOut: stackLegendMouseOut(innerContent)
+  })
 }
 
 function reset() {

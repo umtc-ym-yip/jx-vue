@@ -1,4 +1,3 @@
-import { onMounted } from 'vue'
 import * as d3 from 'd3'
 
 export function useD3Base(context) {
@@ -22,7 +21,7 @@ export function useD3Base(context) {
       .attr('x', margin.left)
       .attr('y', 0)
       .attr('width', width - margin.right - margin.left)
-      .attr('height', height - margin.bottom - margin.top)
+      .attr('height', height - margin.bottom )
 
     return svg
   }
@@ -108,7 +107,7 @@ export function useD3Base(context) {
     // )
     yRightScale = d3
       .scaleLinear()
-      .domain([0, 1])
+      .domain([0.8, 1])
       .range([height - margin.bottom, margin.top])
       .nice()
 

@@ -139,7 +139,7 @@ function drawChart() {
   const brush = createBrush((event) =>
     brushEnd(event, xScale, yScale, () => {
       if (props.hasLine) {
-        drawLine({ innerContent, xScale, yScale })
+        drawLine({ innerContent, xScale, getYValue: (d) => yScale(d[props.yKey]) })
       }
       drawPoints({
         innerContent,
@@ -147,16 +147,16 @@ function drawChart() {
         getYValue: (d) => yScale(d[props.yKey]),
         ucl,
         lcl,
-        onMouseOver: pointMouseOver(svg),
-        onMouseOut: pointMouseOut(),
-        onRectMouseOver: legendMouseOver(),
-        onRectMouseOut: legendMouseOut(),
-        onTextMouseOver: legendMouseOver(),
-        onTextMouseOut: legendMouseOut()
+        onMouseOver: pointMouseOver(svg, innerContent,7),
+        onMouseOut: pointMouseOut(innerContent,3),
+        onRectMouseOver: legendMouseOver(innerContent),
+        onRectMouseOut: legendMouseOut(innerContent),
+        onTextMouseOver: legendMouseOver(innerContent),
+        onTextMouseOut: legendMouseOut(innerContent)
       })
       drawXAxis(props.xAxisType, props.xAxisSampleRate)
       drawYAxis(null, props.margin.left)
-      drawThresholds({ innerContent, yScale, slots })
+      drawThresholds({ innerContent, getYValue: (d) => yScale(d), slots })
       brushContent.call(brush.move, null)
     })
   )
@@ -176,32 +176,33 @@ function drawChart() {
   drawXAxis(props.xAxisType, props.xAxisSampleRate)
   drawYAxis(null, props.margin.left)
   // 繪製管制線
-  drawThresholds({ innerContent, yScale, slots })
+  drawThresholds({ innerContent, getYValue: (d) => yScale(d), slots })
   // 繪製連線
   if (props.hasLine) {
-    drawLine({ innerContent, xScale, yScale })
+    drawLine({ innerContent, xScale, getYValue: (d) => yScale(d[props.yKey]) })
   }
   // 繪製點
   drawPoints({
     innerContent,
     xScale,
     getYValue: (d) => yScale(d[props.yKey]),
+    pointSize:3,
     ucl,
     lcl,
-    onMouseOver: pointMouseOver(svg),
-    onMouseOut: pointMouseOut(),
-    onRectMouseOver: legendMouseOver(),
-    onRectMouseOut: legendMouseOut(),
-    onTextMouseOver: legendMouseOver(),
-    onTextMouseOut: legendMouseOut()
+    onMouseOver: pointMouseOver(svg, innerContent,7),
+    onMouseOut: pointMouseOut(innerContent,3),
+    onRectMouseOver: legendMouseOver(innerContent),
+    onRectMouseOut: legendMouseOut(innerContent),
+    onTextMouseOver: legendMouseOver(innerContent),
+    onTextMouseOut: legendMouseOut(innerContent)
   })
   // 繪製Legend
   drawLegend({
     svg,
-    onRectMouseOver: legendMouseOver(),
-    onRectMouseOut: legendMouseOut(),
-    onTextMouseOver: legendMouseOver(),
-    onTextMouseOut: legendMouseOut()
+    onRectMouseOver: legendMouseOver(innerContent),
+    onRectMouseOut: legendMouseOut(innerContent),
+    onTextMouseOver: legendMouseOver(innerContent),
+    onTextMouseOut: legendMouseOut(innerContent)
   })
 }
 

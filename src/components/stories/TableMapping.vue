@@ -430,9 +430,7 @@ const getmappingData = (lot, layer, isincludefake = 1, process, factory) =>
   axios.get(
     `${API_BASE_URL}${API_ENDPOINTS.AOI_MAPPING}/${lot}/${layer}/${isincludefake}/${process}/${factory}`
   )
-const getLayoutData = () => {
-  return axios.get(`${API_BASE_URL}${API_ENDPOINTS.AOI_LAYOUT}/3273012/249PE002-04-00/-L9L14`)
-}
+const getLayoutData = () => axios.get(`${API_BASE_URL}${API_ENDPOINTS.AOI_LAYOUT}/3273012/249PE002-04-00/-L9L14`)
 
 async function loadData() {
   try {
@@ -444,6 +442,7 @@ async function loadData() {
     layoutData.value = res2.data.dataAry
     dataLoaded.value = true
   } catch (error) {
+
     mappingData.value = mockMappingData
     layoutData.value = mockLayoutData
     dataLoaded.value = true

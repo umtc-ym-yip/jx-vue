@@ -16,10 +16,10 @@ export function useZoom(context) {
       ])
       .on('end', brushEndCallback)
   }
-  function brushEnd(event, xScale, yScale, redrawCallback) {
+  function brushEnd(event, xScale, yScales, redrawCallback) {
     if (!event.sourceEvent) return
     const [[x0, y0], [x1, y1]] = event.selection
-    let selectedXDomain, selectedYDomain
+    let selectedXDomain, selectedYDomains
     if (xType === 'band') {
       selectedXDomain = xScale.domain().filter((d) => {
         const bandStart = xScale(d)
@@ -29,9 +29,16 @@ export function useZoom(context) {
     } else {
       selectedXDomain = [xScale.invert(x0), xScale.invert(x1)]
     }
-    selectedYDomain = [yScale.invert(y1), yScale.invert(y0)]
+    selectedYDomains = Array.isArray(yScales)
+    ? yScales.map(yScale => [yScale.invert(y1), yScale.invert(y0)])
+    : [[yScales.invert(y1), yScales.invert(y0)]]
+
     xScale.domain(selectedXDomain)
-    yScale.domain(selectedYDomain)
+    if (Array.isArray(yScales)) {
+      yScales.forEach((yScale, index) => yScale.domain(selectedYDomains[index]))
+    } else {
+      yScales.domain(selectedYDomains[0])
+    }
     redrawCallback()
     resetBtnShow.value = true
   }
