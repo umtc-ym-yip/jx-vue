@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import JxIcon from '@/components/JxIcon.vue'
+import JxEmptyStatus from '@/components/JxEmptyStatus.vue'
 import { navItems } from '@/config/navLinks'
 
 const activeNavItem = ref(null)
@@ -30,8 +31,7 @@ const toggleLinkList = (linkName) => {
 const route = useRoute()
 watch(route, () => {
   mainContent.value.scrollTo({
-    top: 0,
-    behavior: 'smooth'
+    top: 0
   })
 })
 </script>

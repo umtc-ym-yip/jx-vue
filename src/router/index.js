@@ -10,6 +10,9 @@ import Select from '../components/stories/Select.vue'
 import Icon from '../components/stories/Icon.vue'
 import Modal from '../components/stories/Modal.vue'
 import Radio from '../components/stories/Radio.vue'
+import EmptyStatus from '../components/stories/EmptyStatus.vue'
+
+
 import PointTrend from '../components/stories/PointTrend.vue'
 import TableMapping from '../components/stories/TableMapping.vue'
 import StackBarTrend from '../components/stories/StackBarTrend.vue'
@@ -86,6 +89,11 @@ const router = createRouter({
       path: '/stories/radio',
       name: 'Radio',
       component: Radio
+    },
+    {
+      path:'/stories/emptystatus',
+      name:'EmptyStatus',
+      component:EmptyStatus
     },
     createRoutes(componentLinks),
     // 組件路由
