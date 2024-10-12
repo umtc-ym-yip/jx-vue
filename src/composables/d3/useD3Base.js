@@ -2,7 +2,7 @@ import * as d3 from 'd3'
 
 export function useD3Base(context) {
   const { props, chartContainer, slots } = context
-  let svg, xScale, yScale, yLeftScale, yRightScale
+  let svg, innerContent, xScale, yScale, yLeftScale, yRightScale
   const { width, height, margin, data, xKey, yKey, xType, seriesKeyArray } = props
 
   const createSvg = () => {
@@ -21,9 +21,12 @@ export function useD3Base(context) {
       .attr('x', margin.left)
       .attr('y', 0)
       .attr('width', width - margin.right - margin.left)
-      .attr('height', height - margin.bottom )
+      .attr('height', height - margin.bottom)
 
-    return svg
+    // 在SVG加上遮罩
+    innerContent = svg.append('g').attr('clip-path', 'url(#clipPath)')
+
+    return { svg, innerContent }
   }
 
   const createFixedScales = ({ left, right, top, bottom }) => {
@@ -172,6 +175,11 @@ export function useD3Base(context) {
       .style('user-select', 'none')
       .attr('transform', `translate(0,${height - margin.bottom})`)
       .call(xAxis)
+      .call((g) => {
+        g.select('.domain').remove()
+        g.selectAll('.tick line').attr('stroke', '#A0AEC0') 
+        g.selectAll('.tick text').attr('fill', '#4A5568') 
+      })
 
     if (type === 'table-mapping') {
       xAxisGroup.selectAll('text').style('text-anchor', 'middle')
@@ -189,50 +197,130 @@ export function useD3Base(context) {
     svg.selectAll('.y-axis').remove()
     let yAxis =
       type === 'table-mapping'
-        ? d3.axisLeft(yScale).tickSizeOuter(0).tickSizeInner(5).ticks(10)
-        : d3.axisLeft(yScale)
+        ? d3.axisLeft(yScale).tickSizeOuter(0).tickSizeInner(5).ticks(10).tickSize(0)
+        : d3.axisLeft(yScale).tickSize(0)
     svg
       .append('g')
       .attr('class', 'y-axis')
       .style('user-select', 'none')
       .attr('transform', `translate(${toLeft},0)`)
       .call(yAxis)
+      .call((g) => {
+        g.select('.domain').attr('stroke', '#EDF2F7').attr('stroke-width', 1.5) // 軸線顏色和寬度
+        g.selectAll('.tick line')
+          .attr('stroke', '#A0AEC0')
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.7) // 刻度線顏色、寬度和透明度
+        g.selectAll('.tick text')
+          .attr('fill', '#4A5568')
+          .attr('font-size', '12px')
+          .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+      })
+      .selectAll('.tick line')
+      .clone()
+      .attr('x2', width - margin.left - margin.right)
+      .attr('stroke', '#CBD5E0')
+      .attr('stroke-opacity', 0.2)
   }
 
   const drawTwoYAxis = (toLeft) => {
-    svg.selectAll('.y-axis-left').remove()
-    svg.selectAll('.y-axis-right').remove()
+    innerContent.selectAll('.y-axis-left').remove()
+    innerContent.selectAll('.y-axis-right').remove()
 
     let yAxisLeft = d3
       .axisLeft(yLeftScale)
       .ticks(5)
       .tickFormat((d) => Number(d) * 100 + '%')
+      .tickSize(0)
 
     let yAxisRight = d3
       .axisRight(yRightScale)
       .ticks(5)
       .tickFormat((d) => Number(d) * 100 + '%')
+      .tickSize(0)
 
+    innerContent
+      .append('g')
+      .attr('class', 'y-axis-left')
+      .style('user-select', 'none')
+      .attr('transform', `translate(${toLeft},0)`)
+      .call(yAxisLeft)
+      .call((g) => {
+        g.select('.domain').attr('stroke', '#EDF2F7').attr('stroke-width', 1.5) // 軸線顏色和寬度
+        g.selectAll('.tick line')
+          .attr('stroke', '#A0AEC0')
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.7) // 刻度線顏色、寬度和透明度
+        g.selectAll('.tick text')
+          .attr('fill', '#4A5568')
+          .attr('font-size', '12px')
+          .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+      })
     svg
       .append('g')
       .attr('class', 'y-axis-left')
       .style('user-select', 'none')
       .attr('transform', `translate(${toLeft},0)`)
       .call(yAxisLeft)
+      .call((g) => {
+        g.select('.domain').attr('stroke', '#EDF2F7').attr('stroke-width', 1.5) // 軸線顏色和寬度
+        g.selectAll('.tick line')
+          .attr('stroke', '#A0AEC0')
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.7) // 刻度線顏色、寬度和透明度
+        g.selectAll('.tick text')
+          .attr('fill', '#4A5568')
+          .attr('font-size', '12px')
+          .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+      })
+
+    innerContent
+      .append('g')
+      .attr('class', 'y-axis-right')
+      .style('user-select', 'none')
+      .attr('transform', `translate(${width - margin.right},0)`)
+      .call(yAxisRight)
+      .call((g) => {
+        g.select('.domain').attr('stroke', '#EDF2F7').attr('stroke-width', 1.5) // 軸線顏色和寬度
+        g.selectAll('.tick line')
+          .attr('stroke', '#A0AEC0')
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.7) // 刻度線顏色、寬度和透明度
+        g.selectAll('.tick text')
+          .attr('fill', '#4A5568')
+          .attr('font-size', '12px')
+          .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+      })
+      .selectAll('.tick line')
+      .clone()
+      .attr('x1', -width + margin.left + margin.right)
+      .attr('stroke', '#E2E8F0')
+      .attr('stroke-opacity', 1)
+
     svg
       .append('g')
       .attr('class', 'y-axis-right')
       .style('user-select', 'none')
       .attr('transform', `translate(${width - margin.right},0)`)
       .call(yAxisRight)
+      .call((g) => {
+        g.select('.domain').attr('stroke', '#EDF2F7').attr('stroke-width', 1.5) // 軸線顏色和寬度
+        g.selectAll('.tick line')
+          .attr('stroke', '#A0AEC0')
+          .attr('stroke-width', 1)
+          .attr('opacity', 0.7) // 刻度線顏色、寬度和透明度
+        g.selectAll('.tick text')
+          .attr('fill', '#4A5568')
+          .attr('font-size', '12px')
+          .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+      })
   }
 
   const initChart = () => {
-    svg = createSvg()
     // const scales = createScales()
     // xScale = scales.xScale
     // yScale = scales.yScale
-    return { svg }
+    return createSvg()
   }
 
   return {

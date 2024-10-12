@@ -155,9 +155,9 @@
   :width="800"
   :height="400"
 &gt;
-  &lt;template #tooltip="{ show, data, x, y, setTooltipRef }"&gt;
+  &lt;template #tooltip="{ show, data, x, y,tooltopStatus, setTooltipRef }"&gt;
     &lt;div
-      v-if="show"
+      v-if="show && tooltopStatus=='point'"
       :ref="setTooltipRef"
       class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
       :style="{ left: `${x}px`, top: `${y}px` }"
@@ -167,9 +167,7 @@
       &lt;p&gt;批號: { data.LotNum }&lt;/p&gt;
       &lt;p&gt;批次類型: { data.LotType }&lt;/p&gt;
       &lt;p v-for="key in ['Top1', 'Top2', 'Top3']" :key="key" v-if="data[key]"&gt;
-        { key }: { data[`Top_${key.slice(-1)}`] } ({
-            (parseFloat(data[key]) * 100).toFixed(2)
-          }%)
+        { key }: { data[`Top_${key.slice(-1)}`] }   { data[key] === null ? '' : '(' + (parseFloat(data[key]) * 100).toFixed(2) + '%)' }
       &lt;/p&gt;
     &lt;/div&gt;
   &lt;/template&gt;
@@ -191,9 +189,9 @@
         :width="800"
         :height="400"
       >
-        <template #tooltip="{ show, data, x, y, setTooltipRef }">
+        <template #tooltip="{ show, data, x, y, tooltopStatus, setTooltipRef }">
           <div
-            v-if="show"
+            v-if="show && tooltopStatus == 'point'"
             :ref="setTooltipRef"
             class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
             :style="{ left: `${x}px`, top: `${y}px` }"
@@ -202,10 +200,10 @@
             <p>良率: {{ (parseFloat(data.Yield) * 100).toFixed(2) }}%</p>
             <p>批號: {{ data.LotNum }}</p>
             <p>批次類型: {{ data.LotType }}</p>
+
             <p v-for="key in ['Top1', 'Top2', 'Top3']" :key="key">
-              {{ key }}: {{ data[`Top_${key.slice(-1)}`] }} ({{
-                (parseFloat(data[key]) * 100).toFixed(2)
-              }}%)
+              {{ key }}: {{ data[`Top_${key.slice(-1)}`] }}
+              {{ data[key] === null ? '' : '(' + (parseFloat(data[key]) * 100).toFixed(2) + '%)' }}
             </p>
           </div>
         </template>
@@ -214,11 +212,13 @@
 
     <StorySection title="添加閾值線">
       <template #description>
-        D3StackBarTrend 允許您使用 <StoryCode>thresholds</StoryCode> 插槽來添加自定義的閾值線，例如目標線或警戒線。
+        D3StackBarTrend 允許您使用
+        <StoryCode>thresholds</StoryCode> 插槽來添加自定義的閾值線，例如目標線或警戒線。
       </template>
 
       <template #usage>
-        使用 <StoryCode>#thresholds</StoryCode> 插槽來定義閾值線。您可以添加多個 <StoryCode>threshold</StoryCode> 組件來顯示不同的閾值線。
+        使用 <StoryCode>#thresholds</StoryCode> 插槽來定義閾值線。您可以添加多個
+        <StoryCode>threshold</StoryCode> 組件來顯示不同的閾值線。
       </template>
 
       <template #code>
@@ -246,7 +246,10 @@
           <li><span class="font-semibold">value:</span> 閾值的數值</li>
           <li><span class="font-semibold">label:</span> 閾值線的標籤文字</li>
           <li><span class="font-semibold">color:</span> 閾值線的顏色</li>
-          <li><span class="font-semibold">strokeType:</span> 線條類型，可以是 'solid'（實線）或 'dashed'（虛線）</li>
+          <li>
+            <span class="font-semibold">strokeType:</span> 線條類型，可以是 'solid'（實線）或
+            'dashed'（虛線）
+          </li>
         </StoryList>
       </template>
 
@@ -263,8 +266,7 @@
         <template #thresholds>
           <threshold :value="0.99" label="Target" color="green" />
           <threshold :value="0.95" label="Trigger" color="red" strokeType="dashed" />
-        </template>   
-                    
+        </template>
       </D3StackBarTrend>
     </StorySection>
   </StoryContainer>
@@ -277,7 +279,6 @@ import StoryContainer from './StoryContainer.vue'
 import StorySection from './StorySection.vue'
 import StoryCode from './StoryCode.vue'
 import StoryList from './StoryList.vue'
-
 
 const data = ref([
   {

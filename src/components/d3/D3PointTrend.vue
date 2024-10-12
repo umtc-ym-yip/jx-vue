@@ -130,11 +130,8 @@ function drawChart() {
   // svg = initObject.svg
   // xScale = initObject.xScale
   // yScale = initObject.yScale
-  const { svg } = initChart()
+  const { svg,innerContent } = initChart()
   const { xScale, yScale } = createScales()
-
-  // 在SVG加上遮罩
-  const innerContent = svg.append('g').attr('clip-path', 'url(#clipPath)')
 
   const brush = createBrush((event) =>
     brushEnd(event, xScale, yScale, () => {

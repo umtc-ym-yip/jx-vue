@@ -8,6 +8,7 @@
       :data="tooltipData"
       :x="tooltipLoc.x"
       :y="tooltipLoc.y"
+      :tooltopStatus="tooltopStatus"
       :setTooltipRef="setTooltipRef"
     >
       <!-- 預設tooltip -->
@@ -140,11 +141,11 @@ function drawChart() {
   // svg = initObject.svg
   // xScale = initObject.xScale
   // yScale = initObject.yScale
-  const { svg } = initChart()
+  const { svg, innerContent } = initChart()
   const { xScale, yLeftScale, yRightScale } = createScales({ type: 'two-y' })
 
-  // 在SVG加上遮罩
-  const innerContent = svg.append('g').attr('clip-path', 'url(#clipPath)')
+  // // 在SVG加上遮罩
+  // const innerContent = svg.append('g').attr('clip-path', 'url(#clipPath)')
 
   // const brush = createBrush((event) =>
   //   brushEnd(event, xScale, [yLeftScale, yRightScale], () => {
@@ -214,11 +215,11 @@ function drawChart() {
     innerContent,
     xScale,
     getYValue: (d) => yRightScale(d[props.yKey]),
-    pointSize:5,
+    pointSize: 5,
     ucl,
     lcl,
-    onMouseOver: pointMouseOver(svg, innerContent,7),
-    onMouseOut: pointMouseOut(innerContent,5)
+    onMouseOver: pointMouseOver(svg, innerContent, 7),
+    onMouseOut: pointMouseOut(innerContent, 5)
     // onRectMouseOver: legendMouseOver(innerContent),
     // onRectMouseOut: legendMouseOut(innerContent),
     // onTextMouseOver: legendMouseOver(innerContent),

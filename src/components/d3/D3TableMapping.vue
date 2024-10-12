@@ -112,11 +112,8 @@ function drawChart() {
   // 清除先前的圖表
   d3.select(chartContainer.value).selectAll('*').remove()
   // 初始化產出svg,xScale,yScale
-  const { svg } = initChart()
+  const { svg,innerContent } = initChart()
   const { xScale, yScale } = createScales({ left: 0, right: 515, top: 0, bottom: 510 })
-
-  // 在SVG加上遮罩
-  const innerContent = svg.append('g').attr('clip-path', 'url(#clipPath)')
 
   const brush = createBrush((event) =>
     brushEnd(event, xScale, yScale, () => {
