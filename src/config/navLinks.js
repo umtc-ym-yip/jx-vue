@@ -2,6 +2,7 @@ export const componentLinks = [
   { name: 'Alert', path: '/stories/alert' },
   { name: 'Button', path: '/stories/button' },
   { name: 'Board', path: '/stories/board' },
+  { name: 'CheckBox', path: '/stories/checkbox' },
   { name: 'EmptyStatus', path: '/stories/emptystatus' },
   { name: 'Input', path: '/stories/input' },
   { name: 'Icon', path: '/stories/icon' },

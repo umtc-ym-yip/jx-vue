@@ -2,7 +2,8 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import JxIcon from '@/components/JxIcon.vue'
-import JxButton from './components/JxButton.vue'
+import JxCheckBox from '@/components/JxCheckBox.vue'
+
 import { navItems } from '@/config/navLinks'
 
 const activeNavItem = ref(null)
@@ -34,7 +35,8 @@ watch(route, () => {
     top: 0
   })
 })
-const buttonNumber = ref(0)
+
+const selectedFruits=ref([])
 </script>
 
 <template>
@@ -44,7 +46,7 @@ const buttonNumber = ref(0)
       <!-- 主導航欄內容 -->
       <div>
         <div class="p-4">
-          <h1 class="flex justify-center text-2xl font-bold">SPC</h1>
+          <h1 class="flex justify-center text-2xl font-bold">JXVUE</h1>
         </div>
         <ul>
           <li

@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref} from 'vue'
 import * as rules from './validateRules.js'
 export const useValidation = () => {
   const errors = ref({}) /// { email: [] , password: [] } 陣列存放錯誤訊息
@@ -17,6 +17,26 @@ export const useValidation = () => {
   //   };
   function validate(field, value, fieldRules) {
     errors.value[field] = []
+
+    // 解包裹響應式值
+    // console.log('value',value)
+    // const unwrappedValue = unref(value)
+    // console.log('unwrappedValue',unwrappedValue)
+    // // 檢查是否為空陣列
+    // if (Array.isArray(unwrappedValue) && unwrappedValue.length === 0) {
+    //   errors.value[field].push('必填')
+    //   return
+    // }
+
+    // // 檢查是否為空物件
+    // if (
+    //   typeof unwrappedValue === 'object' &&
+    //   !Array.isArray(unwrappedValue) &&
+    //   Object.keys(unwrappedValue).length === 0
+    // ) {
+    //   errors.value[field].push('必填')
+    //   return
+    // }
     /*傳入單一自訂義規則函數*/
     if (typeof fieldRules === 'function') {
       const errorMessage = fieldRules(value)

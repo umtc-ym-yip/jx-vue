@@ -11,7 +11,7 @@ import Icon from '../components/stories/Icon.vue'
 import Modal from '../components/stories/Modal.vue'
 import Radio from '../components/stories/Radio.vue'
 import EmptyStatus from '../components/stories/EmptyStatus.vue'
-
+import Checkbox from '../components/stories/Checkbox.vue'
 
 import PointTrend from '../components/stories/PointTrend.vue'
 import TableMapping from '../components/stories/TableMapping.vue'
@@ -91,10 +91,16 @@ const router = createRouter({
       component: Radio
     },
     {
-      path:'/stories/emptystatus',
-      name:'EmptyStatus',
-      component:EmptyStatus
+      path: '/stories/emptystatus',
+      name: 'EmptyStatus',
+      component: EmptyStatus
     },
+    {
+      path: '/stories/checkbox',
+      name: 'CheckBox',
+      component: Checkbox
+    },
+
     createRoutes(componentLinks),
     // 組件路由
     // ...createRoutes(componentLinks),
