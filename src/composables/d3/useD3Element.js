@@ -44,7 +44,7 @@ export function useD3Element(context) {
     points
       .enter()
       .append(pointShape || 'circle')
-      .attr('class',(d)=> `point point-${d[seriesKey]}`)
+      .attr('class', (d) => `point point-${d[seriesKey]}`)
       .attr('r', 0)
       .filter((d) => xScale(d[xKey]) !== undefined && getYValue(d) !== undefined)
       .attr('cx', (d) =>
@@ -93,7 +93,7 @@ export function useD3Element(context) {
       .selectAll('g')
       .data(layers)
       .join('g')
-      .attr('class',(d)=>`bar-group bar-group-${d.key}`)
+      .attr('class', (d) => `bar-group bar-group-${d.key}`)
       .attr('fill', (d) => colorScale(d.key))
       .selectAll('rect')
       .data((d) => d.map((value) => ({ value, key: d.key })))
@@ -171,7 +171,7 @@ export function useD3Element(context) {
         innerContent
           .append('path')
           .datum(data.filter((d) => d[seriesKey] === item))
-          .attr('class',(d)=> `line line-${d[seriesKey]}`)
+          .attr('class', (d) => `line line-${d[seriesKey]}`)
           .attr('fill', 'none')
           .attr('stroke', colorScale(item))
           .attr('stroke-width', 1.5)
@@ -191,63 +191,65 @@ export function useD3Element(context) {
 
   function calculateLegendLayout(svg, series, width, height, options = {}) {
     const {
-      rectSize = 10,
-      rectFirstLoc = 80,
-      textPadding = 5,
-      itemSpacing = 30,
-      fontSize = 16
+      legendRectSize = 10,
+      firstLegendX = 80,
+      textRectSpacing = 5,
+      legendItemSpacing = 30,
+      legendFontSize = 16
     } = options
 
-    const rectSavedAry = []
-    const rectSaveSumXAry = []
-    const rectSaveSumYAry = []
+    const legendItemWidths = []
+    const legendItemXPositions = []
+    const legendRowYPositions = []
 
     // 计算每个 legend 项的宽度
     series.forEach((item) => {
-      const tempText = svg.append('text').style('font-size', `${fontSize}px`)
-      const curTextWidth = tempText.text(item).node().getComputedTextLength()
+      const tempText = svg.append('text').style('font-size', `${legendFontSize}px`)
+      const textWidth = tempText.text(item).node().getComputedTextLength()
       tempText.remove()
-      rectSavedAry.push(curTextWidth + rectSize + textPadding)
+      legendItemWidths.push(textWidth + legendRectSize + textRectSpacing)
     })
+
+    const maxLegendItemWidth = Math.max(...legendItemWidths)
 
     // 计算 legend 的位置
-    let maxY = 0
-    const legendItems = series.map((item, i, self) => {
-      let x, y
-      if (i === 0) {
-        x = rectFirstLoc
-        y = height
-        rectSavedAry.push(rectFirstLoc)
-        rectSaveSumYAry.push(y)
+    let maxYPosition = 0
+    const legendItems = series.map((item, index) => {
+      let xPosition, yPosition
+      if (index === 0) {
+        xPosition = firstLegendX
+        yPosition = height
+        legendItemWidths.push(firstLegendX)
+        legendRowYPositions.push(yPosition)
       } else {
-        const prevX = rectSaveSumXAry[i - 1]
-        const prevWidth = rectSavedAry[i - 1]
-        const newX = prevX + prevWidth + itemSpacing
+        const prevXPosition = legendItemXPositions[index - 1]
+        const newXPosition = prevXPosition + maxLegendItemWidth + legendItemSpacing
 
-        if (newX + rectSavedAry[i] >= width) {
+        if (newXPosition + legendItemWidths[index] + legendFontSize + textRectSpacing >= width) {
           // 换行
-          x = rectFirstLoc
-          y = rectSaveSumYAry[rectSaveSumYAry.length - 1] + fontSize + textPadding
-          rectSaveSumYAry.push(y)
+          xPosition = firstLegendX
+          yPosition =
+            legendRowYPositions[legendRowYPositions.length - 1] + legendFontSize + textRectSpacing
+          legendRowYPositions.push(yPosition)
         } else {
-          x = newX
-          y = rectSaveSumYAry[rectSaveSumYAry.length - 1]
+          xPosition = newXPosition
+          yPosition = legendRowYPositions[legendRowYPositions.length - 1]
         }
       }
-      rectSaveSumXAry.push(x)
-      maxY = Math.max(maxY, y)
+      legendItemXPositions.push(xPosition)
+      maxYPosition = Math.max(maxYPosition, yPosition)
 
-      return { [seriesKey ? seriesKey : 'key']: item, x, y }
+      return { [seriesKey ? seriesKey : 'key']: item, x: xPosition, y: yPosition }
     })
 
-    const newHeight = maxY + fontSize + textPadding
+    const newHeight = maxYPosition + legendFontSize + textRectSpacing
 
     return {
       legendItems,
       newHeight,
-      rectSize,
-      textPadding,
-      fontSize
+      legendRectSize,
+      textRectSpacing,
+      legendFontSize
     }
   }
 
@@ -258,12 +260,8 @@ export function useD3Element(context) {
 
     const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
 
-    const { legendItems, newHeight, rectSize, textPadding, fontSize } = calculateLegendLayout(
-      svg,
-      uniqueSeries,
-      width,
-      height
-    )
+    const { legendItems, newHeight, legendRectSize, textRectSpacing, legendFontSize } =
+      calculateLegendLayout(svg, uniqueSeries, width, height)
 
     svg.attr('height', newHeight)
 
@@ -282,8 +280,8 @@ export function useD3Element(context) {
       .attr('class', (d) => `tags-legend-rect tags-legend-rect-${d[seriesKey]}`)
       .attr('x', (d) => d.x)
       .attr('y', (d) => d.y)
-      .attr('width', rectSize)
-      .attr('height', rectSize)
+      .attr('width', legendRectSize)
+      .attr('height', legendRectSize)
       .attr('fill', (d) => (d[seriesKey] === '0' ? 'gray' : colorScale(d[seriesKey])))
       .attr('cursor', 'pointer')
       .attr('rx', 2)
@@ -299,11 +297,11 @@ export function useD3Element(context) {
 
     tagWrap
       .append('text')
-      .attr('class',(d) =>`tags-legend-text tags-legend-text-${d[seriesKey]}`)
-      .attr('x', (d) => d.x + rectSize + textPadding)
-      .attr('y', (d) => d.y + rectSize / 2)
+      .attr('class', (d) => `tags-legend-text tags-legend-text-${d[seriesKey]}`)
+      .attr('x', (d) => d.x + legendRectSize + textRectSpacing)
+      .attr('y', (d) => d.y + legendRectSize / 2)
       .attr('fill', 'black')
-      .style('font-size', `${fontSize}px`)
+      .style('font-size', `${legendFontSize}px`)
       .style('user-select', 'none')
       .style('dominant-baseline', 'middle')
       .text((d) => d[seriesKey])
@@ -324,12 +322,8 @@ export function useD3Element(context) {
       options
     if (!seriesKeyArray) return
 
-    const { legendItems, newHeight, rectSize, textPadding, fontSize } = calculateLegendLayout(
-      svg,
-      seriesKeyArray,
-      width,
-      height
-    )
+    const { legendItems, newHeight, legendRectSize, textRectSpacing, legendFontSize } =
+      calculateLegendLayout(svg, seriesKeyArray, width, height)
 
     svg.attr('height', newHeight)
 
@@ -348,8 +342,8 @@ export function useD3Element(context) {
       .attr('class', (d) => `tags-legend-rect-${d.key}`)
       .attr('x', (d) => d.x)
       .attr('y', (d) => d.y)
-      .attr('width', rectSize)
-      .attr('height', rectSize)
+      .attr('width', legendRectSize)
+      .attr('height', legendRectSize)
       .attr('fill', (d) => colorScale(d.key))
       .attr('cursor', 'pointer')
       .attr('rx', 2)
@@ -366,10 +360,10 @@ export function useD3Element(context) {
     tagWrap
       .append('text')
       .attr('class', (d) => `tags-legend-text-${d.key}`)
-      .attr('x', (d) => d.x + rectSize + textPadding)
-      .attr('y', (d) => d.y + rectSize / 2)
+      .attr('x', (d) => d.x + legendRectSize + textRectSpacing)
+      .attr('y', (d) => d.y + legendRectSize / 2)
       .attr('fill', 'black')
-      .style('font-size', `${fontSize}px`)
+      .style('font-size', `${legendFontSize}px`)
       .style('user-select', 'none')
       .style('dominant-baseline', 'middle')
       .text((d) => d.key)
