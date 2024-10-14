@@ -76,6 +76,14 @@ const props = defineProps({
   xType: {
     type: String,
     default: 'linear'
+  },
+  xAxisType: {
+    type: String,
+    default: 'table-mapping'
+  },
+  xAxisSampleRate: {
+    type: Number,
+    default: 1
   }
 })
 
@@ -112,7 +120,7 @@ function drawChart() {
   // 清除先前的圖表
   d3.select(chartContainer.value).selectAll('*').remove()
   // 初始化產出svg,xScale,yScale
-  const { svg,innerContent } = initChart()
+  const { svg, innerContent } = initChart()
   const { xScale, yScale } = createScales({ left: 0, right: 515, top: 0, bottom: 510 })
 
   const brush = createBrush((event) =>
@@ -133,12 +141,12 @@ function drawChart() {
         innerContent,
         xScale,
         getYValue: (d) => yScale(d[props.yKey]),
-        onMouseOver: pointMouseOver(svg),
-        onMouseOut: pointMouseOut(),
-        onRectMouseOver: legendMouseOver(),
-        onRectMouseOut: legendMouseOut(),
-        onTextMouseOver: legendMouseOver(),
-        onTextMouseOut: legendMouseOut()
+        onMouseOver: pointMouseOver(svg, innerContent, 7),
+        onMouseOut: pointMouseOut(innerContent, 3),
+        onRectMouseOver: legendMouseOver(innerContent),
+        onRectMouseOut: legendMouseOut(innerContent),
+        onTextMouseOver: legendMouseOver(innerContent),
+        onTextMouseOut: legendMouseOut(innerContent)
       })
       drawXAxis(props.xAxisType, props.xAxisSampleRate)
       drawYAxis(null, props.margin.left)
@@ -169,19 +177,19 @@ function drawChart() {
     innerContent,
     xScale,
     getYValue: (d) => yScale(d[props.yKey]),
-    onMouseOver: pointMouseOver(svg),
-    onMouseOut: pointMouseOut(),
-    onRectMouseOver: legendMouseOver(),
-    onRectMouseOut: legendMouseOut(),
-    onTextMouseOver: legendMouseOver(),
-    onTextMouseOut: legendMouseOut()
+    onMouseOver: pointMouseOver(svg, innerContent, 7),
+    onMouseOut: pointMouseOut(innerContent, 3),
+    onRectMouseOver: legendMouseOver(innerContent),
+    onRectMouseOut: legendMouseOut(innerContent),
+    onTextMouseOver: legendMouseOver(innerContent),
+    onTextMouseOut: legendMouseOut(innerContent)
   })
   drawLegend({
     svg,
-    onRectMouseOver: legendMouseOver(),
-    onRectMouseOut: legendMouseOut(),
-    onTextMouseOver: legendMouseOver(),
-    onTextMouseOut: legendMouseOut()
+    onRectMouseOver: legendMouseOver(innerContent),
+    onRectMouseOut: legendMouseOut(innerContent),
+    onTextMouseOver: legendMouseOver(innerContent),
+    onTextMouseOut: legendMouseOut(innerContent)
   })
 }
 

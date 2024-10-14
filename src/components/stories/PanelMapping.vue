@@ -1,8 +1,8 @@
 <template>
-  <StoryContainer title="D3TableMapping 元件">
+  <StoryContainer title="D3PanelMapping 元件">
     <StorySection title="基本用法">
       <template #description>
-        D3TableMapping 是一個基於 D3.js 的表格映射圖元件，用於展示二維數據的分佈情況。
+        D3PanelMapping 是一個基於 D3.js 的表格映射圖元件，用於展示二維數據的分佈情況。
       </template>
 
       <template #usage>
@@ -23,7 +23,7 @@
 
       <template #code>
         <pre>
-        &lt;D3TableMapping
+        &lt;D3PanelMapping
           :data="mappingData"
           :layout-data="layoutData"
           :x-key="'Xvalue'"
@@ -31,11 +31,11 @@
           :series-key="'Classify'"
         &gt;
           &lt;!-- 自定義 tooltip 內容 --&gt;
-        &lt;/D3TableMapping&gt;
+        &lt;/D3PanelMapping&gt;
         </pre>
       </template>
 
-      <D3TableMapping
+      <D3PanelMapping
         v-if="dataLoaded"
         :data="mappingData"
         :layout-data="layoutData"
@@ -44,12 +44,12 @@
         :series-key="'Classify'"
       >
         <!-- 這裡可以添加自定義的 tooltip 內容 -->
-      </D3TableMapping>
+      </D3PanelMapping>
     </StorySection>
 
     <StorySection title="自定義 Tooltip">
       <template #description>
-        D3TableMapping 允許您使用 <StoryCode>tooltip</StoryCode> 插槽來自定義懸浮提示的內容和樣式。
+        D3PanelMapping 允許您使用 <StoryCode>tooltip</StoryCode> 插槽來自定義懸浮提示的內容和樣式。
       </template>
 
       <template #usage>
@@ -59,7 +59,7 @@
 
       <template #code>
         <pre>
-        &lt;D3TableMapping
+        &lt;D3PanelMapping
           :data="mappingData"
           :layout-data="layoutData"
           :x-key="'Xvalue'"
@@ -80,7 +80,7 @@
               &lt;p&gt;板號 : { data.BoardNo }&lt;/p&gt;
             &lt;/div&gt;
           &lt;/template&gt;
-        &lt;/D3TableMapping&gt;
+        &lt;/D3PanelMapping&gt;
         </pre>
       </template>
 
@@ -92,7 +92,7 @@
         組件，並利用作用域插槽的<StoryCode>data</StoryCode>傳入當前數據點的圖片資料。
       </template>
 
-      <D3TableMapping
+      <D3PanelMapping
         v-if="dataLoaded"
         :data="mappingData"
         :layout-data="layoutData"
@@ -114,7 +114,7 @@
             <p>板號 : {{ data.BoardNo }}</p>
           </div>
         </template>
-      </D3TableMapping>
+      </D3PanelMapping>
     </StorySection>
   </StoryContainer>
 </template>
@@ -124,7 +124,7 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL, API_ENDPOINTS } from '@/config/api'
 
-import D3TableMapping from '@/components/d3/D3TableMapping.vue'
+import D3PanelMapping from '@/components/d3/D3PanelMapping.vue'
 import D3AsyncImage from '@/components/d3/D3AsyncImage.vue'
 import StoryContainer from './StoryContainer.vue'
 import StorySection from './StorySection.vue'
@@ -430,7 +430,8 @@ const getmappingData = (lot, layer, isincludefake = 1, process, factory) =>
   axios.get(
     `${API_BASE_URL}${API_ENDPOINTS.AOI_MAPPING}/${lot}/${layer}/${isincludefake}/${process}/${factory}`
   )
-const getLayoutData = () => axios.get(`${API_BASE_URL}${API_ENDPOINTS.AOI_LAYOUT}/3273012/249PE002-04-00/-L9L14`)
+const getLayoutData = () =>
+  axios.get(`${API_BASE_URL}${API_ENDPOINTS.AOI_LAYOUT}/3273012/249PE002-04-00/-L9L14`)
 
 async function loadData() {
   try {
@@ -442,7 +443,6 @@ async function loadData() {
     layoutData.value = res2.data.dataAry
     dataLoaded.value = true
   } catch (error) {
-
     mappingData.value = mockMappingData
     layoutData.value = mockLayoutData
     dataLoaded.value = true

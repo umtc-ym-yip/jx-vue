@@ -1,36 +1,36 @@
 <template>
-    <div class="flex items-center gap-4">
-      <label
-        v-for="item in items"
-        :key="item.value"
-        class="flex items-center gap-2 transition duration-200"
-        :class="getLabelClasses(item)"
-      >
-        <span class="relative rounded border border-opacity-10" :class="getCheckboxClasses(item)">
-          <input
-            type="checkbox"
-            :value="item.value"
-            v-model="innerModelValue"
-            :disabled="item.disabled"
-            class="hidden"
-            :aria-label="item.label"
-          />
+  <div class="flex items-center gap-4">
+    <label
+      v-for="item in items"
+      :key="item.value"
+      class="flex items-center gap-2 transition duration-200"
+      :class="getLabelClasses(item)"
+    >
+      <span class="relative rounded border border-opacity-10" :class="getCheckboxClasses(item)">
+        <input
+          type="checkbox"
+          :value="item.value"
+          v-model="innerModelValue"
+          :disabled="item.disabled"
+          class="hidden"
+          :aria-label="item.label"
+        />
 
-          <span v-if="isChecked(item)" class="absolute top-1/2 left-1/2">
-            <svg
-              class="w-3 h-3 fill-current -translate-x-1/2 -translate-y-1/2"
-              :class="iconClass"
-              viewBox="0 0 20 20"
-              aria-hidden="true"
-            >
-              <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
-            </svg>
-          </span>
+        <span v-if="isChecked(item)" class="absolute top-1/2 left-1/2">
+          <svg
+            class="w-3 h-3 fill-current -translate-x-1/2 -translate-y-1/2"
+            :class="iconClass"
+            viewBox="0 0 20 20"
+            aria-hidden="true"
+          >
+            <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+          </svg>
         </span>
-        <span :class="{ 'text-gray-500': item.disabled }">{{ item.label }}</span>
-      </label>
-    </div>
-    <div v-if="errors.length" class="flex items-center ml-2 mt-1">
+      </span>
+      <span :class="{ 'text-gray-500': item.disabled }">{{ item.label }}</span>
+    </label>
+  </div>
+  <div v-if="errors.length" class="flex items-center ml-2 mt-1">
     <JxIcon class="mr-1" :size="20" :weight="300" :grade="-25" color="text-error-light"
       >info</JxIcon
     >
@@ -38,12 +38,11 @@
       {{ errors[0] }}
     </p>
   </div>
- 
 </template>
 
 <script setup>
 import { computed } from 'vue'
-import JxIcon from './JxIcon.vue';
+import JxIcon from './JxIcon.vue'
 
 const props = defineProps({
   modelValue: {

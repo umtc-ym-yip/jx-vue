@@ -14,7 +14,7 @@ import EmptyStatus from '../components/stories/EmptyStatus.vue'
 import Checkbox from '../components/stories/Checkbox.vue'
 
 import PointTrend from '../components/stories/PointTrend.vue'
-import TableMapping from '../components/stories/TableMapping.vue'
+import TableMapping from '../components/stories/PanelMapping.vue'
 import StackBarTrend from '../components/stories/StackBarTrend.vue'
 import { componentLinks, d3Links } from '@/config/navLinks'
 
