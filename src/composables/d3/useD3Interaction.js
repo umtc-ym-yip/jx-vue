@@ -46,7 +46,7 @@ export function useD3Interaction(context) {
       d3.select(element).transition().duration(200).attr('r', pointSize)
       tooltipShow.value = false
       hiddenTooltip.value = true
-      otherPointReset(event, d, innerContent,pointSize)
+      otherPointReset(event, d, innerContent, pointSize)
       otherLineReset(event, d, innerContent)
     }
   }
@@ -79,6 +79,34 @@ export function useD3Interaction(context) {
       tooltipShow.value = false
       hiddenTooltip.value = true
       othersStackBarReset(event, d, innerContent)
+    }
+  }
+
+  function barMouseOver(svg, innerContent) {
+    return function (event, d, element) {
+      d3.select(element).transition().duration(200).attr('transform', 'scale(1.005)')
+      const [x, y] = d3.pointer(event, chartContainer.value)
+
+      const svgWidth = svg.node().getBoundingClientRect().width
+      tooltipLoc.value = { x: 0, y: 0 }
+      tooltipData.value = d
+      tooltopStatus.value = 'stack'
+      tooltipShow.value = true
+      nextTick(() => {
+        let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
+        let tooltipX = x + tooltipWidth > svgWidth ? x - tooltipWidth - 10 : x + 10
+        let tooltipY = y - 30
+
+        tooltipLoc.value = { x: tooltipX, y: tooltipY }
+        hiddenTooltip.value = false
+      })
+    }
+  }
+  function barMouseOut(innerContent) {
+    return function (event, d, element) {
+      d3.select(element).transition().duration(200).attr('transform', 'scale(1)')
+      tooltipShow.value = false
+      hiddenTooltip.value = true
     }
   }
 
@@ -233,6 +261,8 @@ export function useD3Interaction(context) {
     stackLegendMouseOut,
     legendMouseOut,
     stackBarMouseOver,
-    stackBarMouseOut
+    stackBarMouseOut,
+    barMouseOver,
+    barMouseOut
   }
 }

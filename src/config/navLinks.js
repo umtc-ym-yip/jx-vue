@@ -16,9 +16,10 @@ export const componentLinks = [
 ]
 
 export const d3Links = [
-  { name: 'D3PointTrend', path: '/stories/d3pointtrend' },
-  { name: 'D3PanelMapping', path: '/stories/tablemapping' },
-  { name: 'D3StackBarTrend', path: '/stories/stackbartrend' }
+  { name: 'D3PointTrend', path: '/stories/pointtrend' },
+  { name: 'D3PanelMapping', path: '/stories/panelmapping' },
+  { name: 'D3StackBarTrend', path: '/stories/stackbartrend' },
+  { name: 'D3Pareto', path: '/stories/pareto' }
   // 添加更多 nav2 的連結...
 ]
 

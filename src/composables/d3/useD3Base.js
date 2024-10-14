@@ -110,19 +110,27 @@ export function useD3Base(context) {
     // )
     yRightScale = d3
       .scaleLinear()
-      .domain([0.8, 1])
+      .domain([0, 1])
       .range([height - margin.bottom, margin.top])
       .nice()
 
     // 要累加值變成domain
     const yLeftDomain = []
-    data.forEach((d) => {
-      yLeftDomain.push(
-        seriesKeyArray.reduce((acc, key) => (acc === null ? 0 : Number(acc) + Number(d[key])), 0)
-      )
-    })
+    if (seriesKeyArray) {
+      data.forEach((d) => {
+        yLeftDomain.push(
+          seriesKeyArray.reduce((acc, key) => (acc === null ? 0 : Number(acc) + Number(d[key])), 0)
+        )
+      })
+    } else {
+      yLeftDomain.push(...data.map((d) => Number(d[yKey])))
+    }
+    console.log('data', data)
     const yLeftMax = Math.max(...yLeftDomain)
     const yLeftMin = Math.min(...yLeftDomain)
+    console.log('yLeftDomain', yLeftDomain)
+    console.log('yKey', yKey)
+    console.log('yLeftMin', yLeftMin)
 
     yLeftScale = d3
       .scaleLinear()
@@ -265,7 +273,7 @@ export function useD3Base(context) {
     let yAxisLeft = d3
       .axisLeft(yLeftScale)
       .ticks(5)
-      .tickFormat((d) => Number(d) * 100 + '%')
+      .tickFormat((d) => (Number(d) * 100).toFixed(1) + '%')
       .tickSize(0)
 
     let yAxisRight = d3

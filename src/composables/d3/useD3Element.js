@@ -114,6 +114,33 @@ export function useD3Element(context) {
       })
       .on('click', onClick)
   }
+
+  function drawBars(options = {}) {
+    const { innerContent, xScale, getYValue, onMouseOver, onMouseOut, onClick } = options
+
+    innerContent.selectAll(`.bar`).remove()
+    console.log('hggg')
+    console.log(data)
+
+    console.log('xKey', xKey)
+    console.log('yKey', yKey)
+    const test = data.sort((a, b) => b[yKey] - a[yKey]).map((d) => d[xKey])
+
+    innerContent
+      .selectAll('bar')
+      .data(data)
+      .enter()
+      .append('rect')
+      .attr('class', (d) => {
+        console.log(d)
+        return 'bar'
+      })
+      .attr('x', (d) => xScale(d[xKey]))
+      .attr('y', (d) => getYValue(d[yKey]))
+      .attr('width', xScale.bandwidth())
+      .attr('height', (d) => height - getYValue(d[yKey]))
+      .attr('fill', 'green')
+  }
   function drawThresholds({ innerContent, getYValue, slots }) {
     const thresholdSlots = slots.thresholds?.()
     if (!thresholdSlots) return
@@ -385,6 +412,7 @@ export function useD3Element(context) {
     drawLine,
     drawLegend,
     drawStackBars,
+    drawBars,
     drawStackLegend
   }
 }
