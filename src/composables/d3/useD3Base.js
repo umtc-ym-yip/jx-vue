@@ -100,20 +100,17 @@ export function useD3Base(context) {
     const thresholdValues = thresholdSlots.map((slot) => slot.props?.value).filter(Boolean)
 
     // Calculate y domain including thresholds
-    // const yRightMin = Math.min(
-    //   d3.min(data, (d) => Number(d[yKey])),
-    //   ...thresholdValues.map((d) => Number(d))
-    // )
-    // const yRightMax = Math.max(
-    //   d3.max(data, (d) => Number(d[yKey])),
-    //   ...thresholdValues.map((d) => Number(d))
-    // )
+    const yRightMin = Math.min(
+      d3.min(data, (d) => Number(d[yKey])),
+      ...thresholdValues.map((d) => Number(d))
+    )
+
     yRightScale = d3
       .scaleLinear()
-      .domain([0, 1])
+      .domain([seriesKeyArray ? yRightMin - yRightMin * 0.05 : 0, 1])
       .range([height - margin.bottom, margin.top])
       .nice()
-
+ 
     // 要累加值變成domain
     const yLeftDomain = []
     if (seriesKeyArray) {
@@ -125,12 +122,9 @@ export function useD3Base(context) {
     } else {
       yLeftDomain.push(...data.map((d) => Number(d[yKey])))
     }
-    console.log('data', data)
+
     const yLeftMax = Math.max(...yLeftDomain)
     const yLeftMin = Math.min(...yLeftDomain)
-    console.log('yLeftDomain', yLeftDomain)
-    console.log('yKey', yKey)
-    console.log('yLeftMin', yLeftMin)
 
     yLeftScale = d3
       .scaleLinear()
@@ -294,10 +288,7 @@ export function useD3Base(context) {
           .attr('stroke', '#A0AEC0')
           .attr('stroke-width', 1)
           .attr('opacity', 0.7) // 刻度線顏色、寬度和透明度
-        g.selectAll('.tick text')
-          .attr('fill', '#4A5568')
-          .attr('font-size', '12px')
-          .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+        g.selectAll('.tick text').attr('fill', '#4A5568').attr('font-size', '12px')
       })
     svg
       .append('g')
@@ -311,10 +302,7 @@ export function useD3Base(context) {
           .attr('stroke', '#A0AEC0')
           .attr('stroke-width', 1)
           .attr('opacity', 0.7) // 刻度線顏色、寬度和透明度
-        g.selectAll('.tick text')
-          .attr('fill', '#4A5568')
-          .attr('font-size', '12px')
-          .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+        g.selectAll('.tick text').attr('fill', '#4A5568').attr('font-size', '12px')
       })
 
     innerContent

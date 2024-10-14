@@ -119,22 +119,13 @@ export function useD3Element(context) {
     const { innerContent, xScale, getYValue, onMouseOver, onMouseOut, onClick } = options
 
     innerContent.selectAll(`.bar`).remove()
-    console.log('hggg')
-    console.log(data)
-
-    console.log('xKey', xKey)
-    console.log('yKey', yKey)
-    const test = data.sort((a, b) => b[yKey] - a[yKey]).map((d) => d[xKey])
 
     innerContent
       .selectAll('bar')
       .data(data)
       .enter()
       .append('rect')
-      .attr('class', (d) => {
-        console.log(d)
-        return 'bar'
-      })
+      .attr('class', 'bar')
       .attr('x', (d) => xScale(d[xKey]))
       .attr('y', (d) => getYValue(d[yKey]))
       .attr('width', xScale.bandwidth())
@@ -182,17 +173,14 @@ export function useD3Element(context) {
     innerContent.selectAll(`.line`).remove()
     const lineGenerator = d3
       .line()
-      .x((d) => {
-        return xType === 'band' ? xScale(d[xKey]) + xScale.bandwidth() / 2 : xScale(d[xKey])
-      })
-      .y((d) => getYValue(d))
-      .defined((d) => {
-        return xScale(d[xKey]) !== undefined && getYValue(d) !== undefined
-      })
+      .x((d) => xType === 'band' ? xScale(d[xKey]) + xScale.bandwidth() / 2 : xScale(d[xKey]))
+      .y((d) =>getYValue(d))
+      .defined((d) => xScale(d[xKey]) !== undefined && getYValue(d) !== undefined)
 
     // Draw line
     // 如果有不同的seriesKey，則繪製不同的line
     if (seriesKey) {
+    
       const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
       uniqueSeries.forEach((item) => {
         innerContent
@@ -205,14 +193,15 @@ export function useD3Element(context) {
           .attr('d', lineGenerator)
       })
     } else {
+
       innerContent
         .append('path')
         .datum(data)
         .attr('class', `line`)
-        .attr('d', lineGenerator)
         .attr('fill', 'none')
         .attr('stroke', colorScale())
         .attr('stroke-width', 2)
+        .attr('d', lineGenerator)
     }
   }
 

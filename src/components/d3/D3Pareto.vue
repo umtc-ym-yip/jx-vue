@@ -130,10 +130,17 @@ function drawChart() {
     onMouseOver: barMouseOver(svg, innerContent),
     onMouseOut: barMouseOut(innerContent)
   })
+
+  xScale.domain(
+    [...props.data]
+      .sort((a, b) => a.cumulativePercentage - b.cumulativePercentage)
+      .map((item) => item.label)
+  )
+
   drawLine({
     innerContent,
     xScale,
-    getYValue: (d) => yRightScale(d)
+    getYValue: (d) => yRightScale(d['cumulativePercentage'])
   })
   drawPoints({
     innerContent,
