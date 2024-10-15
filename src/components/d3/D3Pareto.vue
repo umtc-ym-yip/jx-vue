@@ -10,6 +10,7 @@
         :data="tooltipData"
         :x="tooltipLoc.x"
         :y="tooltipLoc.y"
+        :status="tooltipStatus"
         :setTooltipRef="setTooltipRef"
       >
         <!-- 預設tooltip -->

@@ -1,16 +1,6 @@
 <template>
-  <StoryContainer title="D3Pareto 元件">
-    <StorySection title="基本用法">
-      <template #description>
-        D3Pareto 是一個基於 D3.js
-        的Pareto元件，用於展示數據的分佈情況和累積百分比。它結合了柱狀圖和折線圖，能夠直觀地顯示各類別的佔比及其累積效應。
-      </template>
-
-      <template #usage>
-        使用 <StoryCode>data</StoryCode>, <StoryCode>xKey</StoryCode>, <StoryCode>yKey</StoryCode>,
-        屬性來設置圖表的數據和主要參數。
-      </template>
-
+  <StoryContainer title="Pareto 圖表">
+    <StorySection title="屬性說明">
       <template #props>
         <StoryList>
           <li><span class="font-semibold">data:</span> 圖表數據，必須是一個對象數組</li>
@@ -33,122 +23,130 @@
           <li><span class="font-semibold">lineTextColor:</span> 折線文字顏色，默認為 'orange'</li>
         </StoryList>
       </template>
+    </StorySection>
 
+    <StorySection title="基本用法">
+      <template #description>
+        <p>基本的 Pareto 圖表使用示例：</p>
+      </template>
       <template #code>
-        <pre>
-&lt;D3Pareto
+          <pre>
+          &lt;D3Pareto
   :data="paretoData"
-  xKey="label"
+  :xKey="label"
   yKey="percentage"
-
-  title="Pareto分析圖"
-  :width="800"
-  :height="400"
-  x-axis-type="rotate"
-  :x-axis-sample-rate="1"
-&gt;
-&lt;/D3Pareto&gt;
-        </pre>
+  title="基本 Pareto 圖表"
+  &gt;
+</pre>
       </template>
       <D3Pareto
         :data="paretoData"
-        xKey="label"
+        :xKey="'label'"
         yKey="percentage"
-        title="Pareto分析圖"
-        :width="800"
-        :height="400"
-        x-axis-type="rotate"
+        title="基本 Pareto 圖表"
       />
     </StorySection>
 
-    <StorySection title="自定義 Tooltip">
+    <StorySection title="自定義 'Others' 閾值">
       <template #description>
-        D3Pareto 允許您使用 <StoryCode>tooltip</StoryCode> 插槽來自定義懸浮提示的內容和樣式。
+        <p>使用 <code>JxInput</code> 組件來設置 "Others" 類別的閾值：</p>
       </template>
-
-      <template #usage>
-        使用 <StoryCode>#tooltip</StoryCode> 插槽來定義自定義的 tooltip 內容。
-        插槽提供了當前數據點的信息，包括顯示狀態、數據、位置等。
-      </template>
-
       <template #code>
         <pre>
 &lt;D3Pareto
   :data="paretoData"
-  xKey="label"
+  :xKey="'label'"
   yKey="percentage"
-
-  title="Pareto分析圖（自定義 Tooltip）"
-  :width="800"
-  :height="400"
+  title="自定義 'Others' 閾值的 Pareto 圖表"
 &gt;
-  &lt;template #tooltip="{ show, data, x, y, setTooltipRef }"&gt;
-    &lt;div
-      v-if="show"
-      :ref="setTooltipRef"
-      class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
-      :style="{ left: `${x}px`, top: `${y}px` }"
-    &gt;
-      &lt;h3 class="font-bold"&gt;{ data.label }&lt;/h3&gt;
-      &lt;p&gt;百分比: { (data.percentage * 100).toFixed(2) }%&lt;/p&gt;
-      &lt;p&gt;累積百分比: { (data.cumulativePercentage * 100).toFixed(2) }%&lt;/p&gt;
-    &lt;/div&gt;
+  &lt;template #others&gt;
+    &lt;JxInput
+      v-model="combineValue"
+      type="number"
+      :min="0"
+      :max="1"
+      :step="0.01"
+    /&gt;
   &lt;/template&gt;
 &lt;/D3Pareto&gt;
         </pre>
       </template>
-
       <D3Pareto
         :data="paretoData"
-        xKey="label"
+        :xKey="'label'"
         yKey="percentage"
-        title="Pareto分析圖（自定義 Tooltip）"
-        :width="400"
-        :height="400"
+        title="自定義 'Others' 閾值的 Pareto 圖表"
       >
-        <template #tooltip="{ show, data, x, y, setTooltipRef }">
-          <div
-            v-if="show"
-            :ref="setTooltipRef"
-            class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
-            :style="{ left: `${x}px`, top: `${y}px` }"
-          >
-            <h3 class="font-bold">{{ data.label }}</h3>
-            <p>百分比: {{ (data.percentage * 100).toFixed(2) }}%</p>
-            <p>累積百分比: {{ (data.cumulativePercentage * 100).toFixed(2) }}%</p>
-          </div>
+        <template #others>
+          <JxInput
+            v-model="combineValue"
+            type="number"
+            :min="0"
+            :max="1"
+            :step="0.01"
+          />
         </template>
       </D3Pareto>
     </StorySection>
-    <StorySection title="自訂義 Others項合併值">
+
+    <StorySection title="自定義 Tooltip">
       <template #description>
-        D3Pareto 允許您使用 <StoryCode>combineValue</StoryCode> 屬性來自定義 Others 項的合併值。
+        <p>使用 <code>#tooltip</code> 插槽和 <code>D3Tooltip</code> 組件自定義懸浮提示的內容：</p>
+        <p class="mt-2">
+          <strong>D3Tooltip 組件數據流原理：</strong>
+        </p>
+        <ol class="list-decimal list-inside ml-4">
+          <li>D3Pareto 組件在檢測到懸停事件時，會收集相關數據。</li>
+          <li>這些數據通過 <code>tooltipProps</code> 傳遞給 tooltip 插槽。</li>
+          <li>在插槽中，我們將 <code>tooltipProps</code> 綁定到 D3Tooltip 組件。</li>
+          <li>D3Tooltip 組件處理定位邏輯，並通過默認插槽將數據傳遞給自定義內容。</li>
+          <li>在自定義內容中，我們可以訪問 <code>data</code> 和 <code>status</code> 等屬性來渲染所需信息。</li>
+        </ol>
       </template>
-
-      <template #usage>
-        使用 <StoryCode>combineValue</StoryCode> 屬性來設置 Others 項的合併值。
-      </template>
-
       <template #code>
         <pre>
 &lt;D3Pareto
   :data="paretoData"
-  xKey="label"
+  :xKey="'label'"
   yKey="percentage"
+  title="自定義 Tooltip 的 Pareto 圖表"
 &gt;
+  &lt;template #tooltip="tooltipProps"&gt;
+    &lt;D3Tooltip v-bind="tooltipProps"&gt;
+      &lt;template #default="{ data, status }"&gt;
+        &lt;template v-if="status === 'point'"&gt;
+          &lt;h3&gt;{ data.label }&lt;/h3&gt;
+          &lt;p&gt;累積百分比: { (data.cumulativePercentage * 100).toFixed(2) }%&lt;/p&gt;
+        &lt;/template&gt;
+        &lt;template v-if="status === 'single-bar'"&gt;
+          &lt;h3&gt;{ data.label }&lt;/h3&gt;
+          &lt;p&gt;百分比: { (data.percentage * 100).toFixed(2) }%&lt;/p&gt;
+        &lt;/template&gt;
+      &lt;/template&gt;
+    &lt;/D3Tooltip&gt;
+  &lt;/template&gt;
 &lt;/D3Pareto&gt;
         </pre>
       </template>
-      <D3Pareto :data="paretoData" xKey="label" yKey="percentage">
-        <template #others>
-          <JxInput
-            class="w-1/12"
-            id="text"
-            label=" "
-            type="number"
-            placeholder=" "
-            v-model="combineValue"
-          />
+      <D3Pareto
+        :data="paretoData"
+        :xKey="'label'"
+        yKey="percentage"
+        title="自定義 Tooltip 的 Pareto 圖表"
+      >
+        <template #tooltip="tooltipProps">
+          <D3Tooltip v-bind="tooltipProps">
+            <template #default="{ data, status }">
+              <template v-if="status === 'point'">
+                <h3>{{ data.label }}</h3>
+                <p>累積百分比: {{ (data.cumulativePercentage * 100).toFixed(2) }}%</p>
+              </template>
+              <template v-if="status === 'single-bar'">
+                <h3>{{ data.label }}</h3>
+                <p>百分比: {{ (data.percentage * 100).toFixed(2) }}%</p>
+              </template>
+            </template>
+          </D3Tooltip>
         </template>
       </D3Pareto>
     </StorySection>
@@ -164,6 +162,8 @@ import StorySection from './StorySection.vue'
 import StoryCode from './StoryCode.vue'
 import StoryList from './StoryList.vue'
 import JxInput from '@/components/JxInput.vue'
+import D3Tooltip from '@/components/d3/D3Tooltip.vue'
+
 // 假設這是您的原始數據
 const rawData = ref(generateTestData())
 const xKey = ref('Classify')
