@@ -29,10 +29,11 @@ export function processParetoData(data, key, combineValue) {
 
   const significantItems = paretoItems.slice(
     0,
-    othersIndex !== -1 ? othersIndex : paretoItems.length
+    // 如果Others的下一項是最後一個，則不用Others
+    othersIndex !== -1 && othersIndex !== paretoItems.length - 1 ? othersIndex : paretoItems.length
   )
 
-  if (othersIndex !== -1) {
+  if (othersIndex !== -1 && othersIndex !== paretoItems.length - 1) {
     const othersPercentage = 1 - significantItems.reduce((sum, item) => sum + item.percentage, 0)
     significantItems.push({
       label: 'Others',
