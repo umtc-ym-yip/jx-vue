@@ -10,6 +10,7 @@
       :placeholder="placeholder"
       :required="required"
       :disabled="disabled"
+      v-bind="type === 'number' ? { min, max, step } : {}"
       class="w-full px-3 py-2 border rounded-md outline-none transition-all duration-200 ease-in-out"
       :class="[
         errors.length
@@ -70,6 +71,18 @@ const props = defineProps({
   rules: {
     type: Array,
     default: () => []
+  },
+  min: {
+    type: Number,
+    default: 0
+  },
+  max: {
+    type: Number,
+    default: 1
+  },
+  step: {
+    type: Number,
+    default: 0.1
   }
 })
 const inputValue = computed({

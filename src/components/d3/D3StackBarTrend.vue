@@ -8,7 +8,7 @@
       :data="tooltipData"
       :x="tooltipLoc.x"
       :y="tooltipLoc.y"
-      :tooltopStatus="tooltopStatus"
+      :tooltipStatus="tooltipStatus"
       :setTooltipRef="setTooltipRef"
     >
       <!-- 預設tooltip -->
@@ -16,7 +16,7 @@
         ref="tooltip"
         class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
         :class="{ 'opacity-0': hiddenTooltip }"
-        v-if="tooltipShow && tooltopStatus === 'stack'"
+        v-if="tooltipShow && tooltipStatus === 'stack'"
         :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
       >
         缺點: {{ tooltipData.key }}<br />
@@ -26,7 +26,7 @@
         ref="tooltip"
         class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
         :class="{ 'opacity-0': hiddenTooltip }"
-        v-if="tooltipShow && tooltopStatus === 'point'"
+        v-if="tooltipShow && tooltipStatus === 'point'"
         :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
       >
         {{ props.xKey }}: {{ tooltipData[props.xKey] }}<br />
@@ -115,7 +115,7 @@ const {
   tooltipShow,
   tooltipLoc,
   tooltipData,
-  tooltopStatus,
+  tooltipStatus,
   hiddenTooltip,
   setTooltipRef,
   stackBarMouseOver,
@@ -192,8 +192,8 @@ function drawChart() {
     .text(props.title)
 
   // 繪製X,Y軸
-  drawXAxis(props.xAxisType, props.xAxisSampleRate)
-  drawTwoYAxis(props.margin.left)
+  drawXAxis(props.xAxisType, props.xAxisSampleRate, xScale)
+  drawTwoYAxis(props.margin.left, yLeftScale, yRightScale)
 
   drawStackBars({
     innerContent,
@@ -204,7 +204,7 @@ function drawChart() {
   })
   // 繪製管制線
   drawThresholds({ innerContent, getYValue: (d) => yRightScale(d), slots })
-  drawLine({ innerContent, xScale, getYValue: (d) => yRightScale(d[props.yKey]) })
+  drawLine({ innerContent, xScale, getYValue: (d) => yRightScale(d[props.yKey]), data: props.data })
 
   // 繪製連線
   //   if (props.hasLine) {
@@ -219,7 +219,8 @@ function drawChart() {
     ucl,
     lcl,
     onMouseOver: pointMouseOver(svg, innerContent, 7),
-    onMouseOut: pointMouseOut(innerContent, 5)
+    onMouseOut: pointMouseOut(innerContent, 5),
+    data: props.data
     // onRectMouseOver: legendMouseOver(innerContent),
     // onRectMouseOut: legendMouseOut(innerContent),
     // onTextMouseOver: legendMouseOver(innerContent),

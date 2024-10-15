@@ -110,7 +110,7 @@ export function useD3Base(context) {
       .domain([seriesKeyArray ? yRightMin - yRightMin * 0.05 : 0, 1])
       .range([height - margin.bottom, margin.top])
       .nice()
- 
+
     // 要累加值變成domain
     const yLeftDomain = []
     if (seriesKeyArray) {
@@ -146,7 +146,7 @@ export function useD3Base(context) {
     }
   }
 
-  const drawXAxis = (type, sampleRate) => {
+  const drawXAxis = (type, sampleRate, xScale) => {
     svg.selectAll('.x-axis').remove()
     let xAxis
     if (type === 'sample') {
@@ -211,7 +211,7 @@ export function useD3Base(context) {
     }
   }
 
-  const drawYAxis = (type, toLeft) => {
+  const drawYAxis = (type, toLeft, yScale) => {
     svg.selectAll('.y-axis').remove()
     let yAxis
     if (type === 'table-mapping') {
@@ -260,7 +260,7 @@ export function useD3Base(context) {
     }
   }
 
-  const drawTwoYAxis = (toLeft) => {
+  const drawTwoYAxis = (toLeft, yLeftScale, yRightScale) => {
     innerContent.selectAll('.y-axis-left').remove()
     innerContent.selectAll('.y-axis-right').remove()
 

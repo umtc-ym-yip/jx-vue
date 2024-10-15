@@ -10,7 +10,7 @@ export function useD3Interaction(context) {
   const tooltipShow = ref(false)
   const tooltipLoc = ref({ x: 0, y: 0 })
   const tooltipData = ref({})
-  const tooltopStatus = ref('')
+  const tooltipStatus = ref('')
   const hiddenTooltip = ref(false)
   const externalTooltipRef = ref(null)
   const setTooltipRef = (el) => {
@@ -27,7 +27,7 @@ export function useD3Interaction(context) {
       const svgWidth = svg.node().getBoundingClientRect().width
       tooltipLoc.value = { x: 0, y: 0 }
       tooltipData.value = d
-      tooltopStatus.value = 'point'
+      tooltipStatus.value = 'point'
       tooltipShow.value = true
       nextTick(() => {
         let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
@@ -60,7 +60,7 @@ export function useD3Interaction(context) {
       const svgWidth = svg.node().getBoundingClientRect().width
       tooltipLoc.value = { x: 0, y: 0 }
       tooltipData.value = d
-      tooltopStatus.value = 'stack'
+      tooltipStatus.value = 'stack'
       tooltipShow.value = true
       nextTick(() => {
         let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
@@ -90,7 +90,7 @@ export function useD3Interaction(context) {
       const svgWidth = svg.node().getBoundingClientRect().width
       tooltipLoc.value = { x: 0, y: 0 }
       tooltipData.value = d
-      tooltopStatus.value = 'stack'
+      tooltipStatus.value = 'single-bar'
       tooltipShow.value = true
       nextTick(() => {
         let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
@@ -142,6 +142,8 @@ export function useD3Interaction(context) {
   }
 
   function otherPointFade(event, d, innerContent) {
+    if (!seriesKey) return
+
     const allElements = innerContent.selectAll(`.point`)
     const othersElements = allElements.filter((i) => i[seriesKey] !== d[seriesKey])
     othersElements.each((d, i, nodes) => {
@@ -157,6 +159,7 @@ export function useD3Interaction(context) {
 
   function otherPointReset(event, d, innerContent) {
     // 恢復原本大小
+    if (!seriesKey) return
 
     const allElements = innerContent.selectAll(`.point`)
     const othersElements = allElements.filter((i) => i[seriesKey] !== d[seriesKey])
@@ -171,6 +174,7 @@ export function useD3Interaction(context) {
     })
   }
   function otherLineFade(event, d, innerContent) {
+    if (!seriesKey) return
     const allElements = innerContent.selectAll(`.line`)
     const othersElements = allElements.filter((i) => i[0]?.[seriesKey] !== d[seriesKey])
     othersElements.each((d, i, nodes) => {
@@ -181,6 +185,7 @@ export function useD3Interaction(context) {
     })
   }
   function otherLineReset(event, d, innerContent) {
+    if (!seriesKey) return
     const allElements = innerContent.selectAll(`.line`)
     const othersElements = allElements.filter((i) => i[0]?.[seriesKey] !== d[seriesKey])
     othersElements.each((d, i, nodes) => {
@@ -249,7 +254,7 @@ export function useD3Interaction(context) {
     tooltipShow,
     tooltipLoc,
     tooltipData,
-    tooltopStatus,
+    tooltipStatus,
     hiddenTooltip,
     setTooltipRef,
     pointMouseOver,

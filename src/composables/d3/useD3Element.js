@@ -22,6 +22,7 @@ export function useD3Element(context) {
       innerContent,
       xScale,
       getYValue,
+      color,
       ucl,
       lcl,
       pointSize = 3,
@@ -29,7 +30,8 @@ export function useD3Element(context) {
       onMouseOut,
       onClick,
       pointShape = 'circle',
-      keyFn = (d) => d[xKey]
+      keyFn = (d) => d[xKey],
+      data
     } = options
 
     if (!innerContent || !xScale || !getYValue) {
@@ -64,7 +66,7 @@ export function useD3Element(context) {
         if ((ucl && y > Number(ucl)) || (lcl && y < Number(lcl))) {
           return 'red'
         }
-        return 'steelblue'
+        return color || 'steelblue'
       })
       .attr('opacity', (d) => (d[seriesKey] === '0' ? 0.2 : 1))
       .attr('stroke', (d) => (d[seriesKey] === '0' || chartType === 'table-mapping' ? '' : 'white'))
@@ -116,7 +118,17 @@ export function useD3Element(context) {
   }
 
   function drawBars(options = {}) {
-    const { innerContent, xScale, getYValue, onMouseOver, onMouseOut, onClick } = options
+    const {
+      innerContent,
+      xScale,
+      getYValue,
+      color,
+      onMouseOver,
+      onMouseOut,
+      onClick,
+      data,
+      barColor
+    } = options
 
     innerContent.selectAll(`.bar`).remove()
 
@@ -130,7 +142,14 @@ export function useD3Element(context) {
       .attr('y', (d) => getYValue(d[yKey]))
       .attr('width', xScale.bandwidth())
       .attr('height', (d) => height - getYValue(d[yKey]))
-      .attr('fill', 'green')
+      .attr('fill', barColor)
+      .on('mouseover', function (event, d) {
+        if (onMouseOver) onMouseOver(event, d, this)
+      })
+      .on('mouseout', function (event, d) {
+        if (onMouseOut) onMouseOut(event, d, this)
+      })
+      .on('click', onClick)
   }
   function drawThresholds({ innerContent, getYValue, slots }) {
     const thresholdSlots = slots.thresholds?.()
@@ -169,18 +188,18 @@ export function useD3Element(context) {
       }
     })
   }
-  function drawLine({ innerContent, xScale, getYValue }) {
+  function drawLine({ innerContent, xScale, getYValue, key, color, data }) {
     innerContent.selectAll(`.line`).remove()
     const lineGenerator = d3
       .line()
-      .x((d) => xType === 'band' ? xScale(d[xKey]) + xScale.bandwidth() / 2 : xScale(d[xKey]))
-      .y((d) =>getYValue(d))
+      .x((d) => (xType === 'band' ? xScale(d[xKey]) + xScale.bandwidth() / 2 : xScale(d[xKey])))
+      .y((d) => getYValue(d))
       .defined((d) => xScale(d[xKey]) !== undefined && getYValue(d) !== undefined)
 
     // Draw line
     // 如果有不同的seriesKey，則繪製不同的line
+
     if (seriesKey) {
-    
       const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
       uniqueSeries.forEach((item) => {
         innerContent
@@ -188,21 +207,38 @@ export function useD3Element(context) {
           .datum(data.filter((d) => d[seriesKey] === item))
           .attr('class', (d) => `line line-${d[seriesKey]}`)
           .attr('fill', 'none')
-          .attr('stroke', colorScale(item))
+          .attr('stroke', color || colorScale(item))
           .attr('stroke-width', 1.5)
           .attr('d', lineGenerator)
       })
     } else {
-
       innerContent
         .append('path')
         .datum(data)
         .attr('class', `line`)
         .attr('fill', 'none')
-        .attr('stroke', colorScale())
+        .attr('stroke', color || colorScale())
         .attr('stroke-width', 2)
         .attr('d', lineGenerator)
     }
+  }
+
+  function drawLabel({ innerContent, xScale, getYValue, key, color, data }) {
+    innerContent.selectAll(`.label`).remove()
+    innerContent
+      .append('g')
+      .attr('class', `label-${key}`)
+      .selectAll('.label')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', (d) => `label-text`)
+      .attr('x', (d) => xScale(d[xKey]) + xScale.bandwidth() / 2)
+      .attr('y', (d) => getYValue(d) - 5)
+      .text((d) => (d[key] * 100).toFixed(0) + '%')
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '12px')
+      .attr('fill', color)
   }
 
   function calculateLegendLayout(svg, series, width, height, options = {}) {
@@ -397,6 +433,7 @@ export function useD3Element(context) {
 
   return {
     drawPoints,
+    drawLabel,
     drawThresholds,
     drawLine,
     drawLegend,

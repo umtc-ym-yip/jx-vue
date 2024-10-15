@@ -146,17 +146,18 @@ function drawChart() {
         onRectMouseOver: legendMouseOver(innerContent),
         onRectMouseOut: legendMouseOut(innerContent),
         onTextMouseOver: legendMouseOver(innerContent),
-        onTextMouseOut: legendMouseOut(innerContent)
+        onTextMouseOut: legendMouseOut(innerContent),
+        data: props.data
       })
-      drawXAxis(props.xAxisType, props.xAxisSampleRate)
-      drawYAxis(null, props.margin.left)
+      drawXAxis(props.xAxisType, props.xAxisSampleRate, xScale)
+      drawYAxis(null, props.margin.left, yScale)
       brushContent.call(brush.move, null)
     })
   )
   brushContent = innerContent.append('g').call(brush)
 
-  drawXAxis('table-mapping', null)
-  drawYAxis('table-mapping', props.margin.left)
+  drawXAxis('table-mapping', null, xScale)
+  drawYAxis('table-mapping', props.margin.left, yScale)
 
   const line = d3
     .line()
@@ -182,7 +183,8 @@ function drawChart() {
     onRectMouseOver: legendMouseOver(innerContent),
     onRectMouseOut: legendMouseOut(innerContent),
     onTextMouseOver: legendMouseOver(innerContent),
-    onTextMouseOut: legendMouseOut(innerContent)
+    onTextMouseOut: legendMouseOut(innerContent),
+    data: props.data
   })
   drawLegend({
     svg,

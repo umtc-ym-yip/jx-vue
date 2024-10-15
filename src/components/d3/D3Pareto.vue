@@ -1,30 +1,42 @@
 <!-- 要有折線(80/20)/柱狀圖 -->
 <!-- 缺點陣列['S1','S1','S2',...] 分母 排算比例 -->
 <template>
-  <div ref="chartContainer" class="relative">
-    <!-- 給客製化生成tooltip位置使用 -->
-    <!-- 客製化tooltip，用作用域插槽傳遞內部資料出去，利用setTooltipRef去取得外部元素 -->
-    <slot
-      name="tooltip"
-      :show="tooltipShow"
-      :data="tooltipData"
-      :x="tooltipLoc.x"
-      :y="tooltipLoc.y"
-      :setTooltipRef="setTooltipRef"
-    >
-      <!-- 預設tooltip -->
-      <div
-        ref="tooltip"
-        class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
-        :class="{ 'opacity-0': hiddenTooltip }"
-        v-if="tooltipShow"
-        :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
+  <div class="flex">
+    <div ref="chartContainer" class="relative">
+      <!-- 圖表內容 -->
+      <slot
+        name="tooltip"
+        :show="tooltipShow"
+        :data="tooltipData"
+        :x="tooltipLoc.x"
+        :y="tooltipLoc.y"
+        :setTooltipRef="setTooltipRef"
       >
-        {{ props.xKey }}: {{ tooltipData[props.xKey] }}<br />
-        {{ props.yKey }}: {{ tooltipData[props.yKey] }}
-      </div>
-    </slot>
-    <slot name="thresholds"></slot>
+        <!-- 預設tooltip -->
+        <div
+          v-if="tooltipShow && tooltipStatus === 'single-bar'"
+          ref="tooltip"
+          class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
+          :class="{ 'opacity-0': hiddenTooltip }"
+          :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
+        >
+          {{ props.xKey }}: {{ tooltipData[props.xKey] }}<br />
+          {{ props.yKey }}: {{ (tooltipData['percentage'] * 100).toFixed(1) + '%' }}
+        </div>
+
+        <div
+          v-if="tooltipShow && tooltipStatus === 'point'"
+          ref="tooltip"
+          class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
+          :class="{ 'opacity-0': hiddenTooltip }"
+          :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
+        >
+          {{ props.xKey }}: {{ tooltipData[props.xKey] }}<br />
+          {{ props.yKey }}: {{ (tooltipData['cumulativePercentage'] * 100).toFixed(1) + '%' }}
+        </div>
+      </slot>
+    </div>
+    <slot name="others"></slot>
   </div>
 </template>
 <script setup>
@@ -43,11 +55,11 @@ const props = defineProps({
   },
   width: {
     type: Number,
-    default: 500
+    default: 400
   },
   height: {
     type: Number,
-    default: 300
+    default: 400
   },
   margin: {
     type: Object,
@@ -59,10 +71,6 @@ const props = defineProps({
   },
   yKey: {
     type: String,
-    required: true
-  },
-  combineValue: {
-    type: [Number, String],
     required: true
   },
   title: {
@@ -80,6 +88,26 @@ const props = defineProps({
   xType: {
     type: String,
     default: 'band'
+  },
+  lineColor: {
+    type: String,
+    default: 'orange'
+  },
+  barTextColor: {
+    type: String,
+    default: 'gray'
+  },
+  lineTextColor: {
+    type: String,
+    default: 'orange'
+  },
+  barColor: {
+    type: String,
+    default: 'green'
+  },
+  pointColor: {
+    type: String,
+    default: 'steelblue'
   }
 })
 const chartContainer = ref(null)
@@ -87,12 +115,14 @@ const slots = useSlots()
 const context = useD3Context(props, chartContainer, slots)
 
 const { initChart, drawXAxis, drawTwoYAxis, createScales } = useD3Base(context)
-const { drawBars, drawPoints, drawThresholds, drawLine, drawLegend } = useD3Element(context)
+const { drawBars, drawPoints, drawThresholds, drawLine, drawLegend, drawLabel } =
+  useD3Element(context)
 const { createAlarmLimit } = useD3Alarm()
 const alarmLimit = createAlarmLimit(slots)
 const {
   tooltip,
   tooltipShow,
+  tooltipStatus,
   tooltipLoc,
   tooltipData,
   hiddenTooltip,
@@ -121,14 +151,23 @@ function drawChart() {
     .text(props.title)
 
   // 繪製X,Y軸
-  drawXAxis(props.xAxisType, props.xAxisSampleRate)
-  drawTwoYAxis(props.margin.left)
+  xScale.domain(props.data.map((item) => item.label)) ///重新依照data的label來產生xScale
+
+  // 算出更新後的data 左邊y軸(percentage) 新值
+  const newLeftMaxData = Math.max(...props.data.map((item) => item.percentage))
+
+  yLeftScale.domain([0, newLeftMaxData + 0.1])
+
+  drawXAxis(props.xAxisType, props.xAxisSampleRate, xScale)
+  drawTwoYAxis(props.margin.left, yLeftScale, yRightScale)
   drawBars({
     innerContent,
     xScale,
     getYValue: (d) => yLeftScale(d),
+    barColor: props.barColor,
     onMouseOver: barMouseOver(svg, innerContent),
-    onMouseOut: barMouseOut(innerContent)
+    onMouseOut: barMouseOut(innerContent),
+    data: props.data
   })
 
   xScale.domain(
@@ -140,14 +179,35 @@ function drawChart() {
   drawLine({
     innerContent,
     xScale,
-    getYValue: (d) => yRightScale(d['cumulativePercentage'])
+    getYValue: (d) => yRightScale(d['cumulativePercentage']),
+    key: null,
+    color: props.lineColor,
+    data: props.data
   })
   drawPoints({
     innerContent,
     xScale,
-    getYValue: (d) => yRightScale(d),
-    onMouseOver: pointMouseOver(svg, innerContent),
-    onMouseOut: pointMouseOut(innerContent)
+    getYValue: (d) => yRightScale(d['cumulativePercentage']),
+    color: props.pointColor,
+    onMouseOver: pointMouseOver(svg, innerContent, 7),
+    onMouseOut: pointMouseOut(innerContent, 3),
+    data: props.data
+  })
+  drawLabel({
+    innerContent,
+    xScale,
+    getYValue: (d) => yRightScale(d['cumulativePercentage']),
+    key: 'cumulativePercentage',
+    color: props.lineTextColor,
+    data: props.data
+  })
+  drawLabel({
+    innerContent,
+    xScale,
+    getYValue: (d) => yLeftScale(d['percentage']),
+    key: 'percentage',
+    color: props.barTextColor,
+    data: props.data
   })
 }
 
