@@ -36,7 +36,7 @@ watch(route, () => {
   })
 })
 
-const selectedFruits = ref([])
+const date = ref()
 </script>
 
 <template>

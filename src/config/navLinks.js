@@ -3,6 +3,7 @@ export const componentLinks = [
   { name: 'Button', path: '/stories/button' },
   { name: 'Board', path: '/stories/board' },
   { name: 'CheckBox', path: '/stories/checkbox' },
+  { name: 'DatePicker', path: '/stories/datepicker' },
   { name: 'EmptyStatus', path: '/stories/emptystatus' },
   { name: 'Input', path: '/stories/input' },
   { name: 'Icon', path: '/stories/icon' },

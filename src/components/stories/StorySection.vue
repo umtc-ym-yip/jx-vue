@@ -53,7 +53,7 @@
       </p>
     </div>
 
-    <div class="mt-6 bg-gray-50 p-4 rounded-md border border-gray-200">
+    <div v-if="$slots.default" class="mt-6 bg-gray-50 p-4 rounded-md border border-gray-200">
       <div class="flex items-center gap-2 mb-2">
         <JxIcon color="text-gray-700" size="20" weight="400" grade="100"
           >approval_delegation</JxIcon
@@ -61,7 +61,7 @@
         <h4 class="text-lg font-semibold text-gray-700">範例</h4>
       </div>
       <div class="space-y-4">
-        <slot></slot>
+        <slot name="default"></slot>
       </div>
     </div>
   </div>
@@ -104,4 +104,3 @@ watch(
   { immediate: true }
 )
 </script>
-<style scoped></style>

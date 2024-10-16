@@ -32,7 +32,7 @@
       </div>
       <div v-if="showClose" class="ml-auto">
         <JxIcon
-          class="cursor-pointer text-secondary hover:text-secondary-light"
+          class="cursor-pointer text-secondary hover:text-secondary-dark"
           fill="0"
           weight="300"
           @click="closeNotice"
