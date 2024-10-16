@@ -6,6 +6,7 @@ export const componentLinks = [
   { name: 'EmptyStatus', path: '/stories/emptystatus' },
   { name: 'Input', path: '/stories/input' },
   { name: 'Icon', path: '/stories/icon' },
+  { name: 'Notice', path: '/stories/notice' },
   { name: 'Radio', path: '/stories/radio' },
   { name: 'Modal', path: '/stories/modal' },
   { name: 'Select', path: '/stories/select' },
