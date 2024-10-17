@@ -29,23 +29,39 @@ export function useD3Base(context) {
     return { svg, innerContent }
   }
 
-  const createFixedScales = ({ left, right, top, bottom }) => {
-    xScale =
-      xType === 'band'
-        ? d3
-            .scaleBand()
-            .domain([left, right])
-            .range([margin.left, width - margin.right])
-            .padding(0.1)
-        : d3
-            .scaleLinear()
-            .domain([left, right])
-            .range([margin.left, width - margin.right])
+  const createFixedScales = ({ left, right, top, bottom, type }) => {
+    if (type === 'hot-zone') {
+      const xAxisArray = data.map((d) => d[xKey])
+      xScale = d3
+        .scaleBand()
+        .domain(xAxisArray.sort((a, b) => a - b))
+        .range([margin.left, width - margin.right])
+    } else {
+      xScale =
+        xType === 'band'
+          ? d3
+              .scaleBand()
+              .domain([left, right])
+              .range([margin.left, width - margin.right])
+              .padding(0.1)
+          : d3
+              .scaleLinear()
+              .domain([left, right])
+              .range([margin.left, width - margin.right])
+    }
 
-    yScale = d3
-      .scaleLinear()
-      .domain([top, bottom])
-      .range([height - margin.bottom, margin.top])
+    if (type === 'hot-zone') {
+      const yAxisArray = [...new Set(data.map((d) => d[yKey]))]
+      yScale = d3
+        .scaleBand()
+        .domain(yAxisArray.sort((a, b) => a - b))
+        .range([margin.top, height - margin.bottom])
+    } else {
+      yScale = d3
+        .scaleLinear()
+        .domain([top, bottom])
+        .range([height - margin.bottom, margin.top])
+    }
     return { xScale, yScale }
   }
 
@@ -136,9 +152,18 @@ export function useD3Base(context) {
   }
 
   const createScales = ({ left, right, top, bottom, type } = {}) => {
-    let isFixed = left === 0 ? true : left && right && top && bottom === 0 ? true : bottom
+    let isFixed = false
+    if (
+      typeof left === 'number' &&
+      typeof right === 'number' &&
+      typeof top === 'number' &&
+      typeof bottom === 'number'
+    ) {
+      isFixed = true
+    }
+
     if (isFixed) {
-      return createFixedScales({ left, right, top, bottom })
+      return createFixedScales({ left, right, top, bottom, type })
     } else if (type === 'two-y') {
       return createTwoDynamicScales()
     } else {
@@ -167,6 +192,8 @@ export function useD3Base(context) {
       xAxis = d3.axisBottom(xScale).tickFormat((d, i) => (i % sampleRate === 0 ? d : ''))
     } else if (type === 'table-mapping') {
       xAxis = d3.axisBottom(xScale).tickSizeOuter(0).tickSizeInner(5).ticks(5)
+    } else if (type === 'hot-zone') {
+      xAxis = d3.axisBottom(xScale).tickSizeOuter(0).tickSizeInner(0)
     } else {
       xAxis = d3.axisBottom(xScale)
     }
@@ -185,6 +212,23 @@ export function useD3Base(context) {
           g.selectAll('.tick line').attr('stroke', '#A0AEC0')
           g.selectAll('.tick text').attr('fill', '#4A5568')
         })
+    } else if (type === 'hot-zone') {
+      const uniqueX = [...new Set(data.map((d) => d[xKey]))]
+
+      xAxisGroup = svg
+        .append('g')
+        .attr('class', 'x-axis')
+        .style('user-select', 'none')
+        .attr('transform', `translate(0,${height - margin.bottom})`)
+        .call(xAxis)
+        .call((g) => {
+          g.select('.domain').remove()
+          g.selectAll('.tick text')
+            .attr('transform', 'rotate(0)')
+            .style('text-anchor', 'middle')
+            .attr('dx', (d) => (d > uniqueX.length / 2 ? 3 : -3))
+            .attr('dy', 10)
+        })
     } else {
       xAxisGroup = svg
         .append('g')
@@ -195,20 +239,25 @@ export function useD3Base(context) {
         .call((g) => {
           g.select('.domain').remove()
           g.selectAll('.tick line').attr('stroke', '#A0AEC0')
-          g.selectAll('.tick text').attr('fill', '#4A5568')
+          g.selectAll('.tick text')
+            .attr('fill', '#4A5568')
+            .attr('transform', 'rotate(-45)')
+            .style('text-anchor', 'end')
+            .attr('dx', '-.8em')
+            .attr('dy', '.15em')
         })
     }
 
-    if (type === 'table-mapping') {
-      xAxisGroup.selectAll('text').style('text-anchor', 'middle')
-    } else {
-      xAxisGroup
-        .selectAll('text')
-        .attr('transform', type === 'table-mapping' ? null : 'rotate(-45)')
-        .style('text-anchor', 'end')
-        .attr('dx', '-.8em')
-        .attr('dy', '.15em')
-    }
+    // if (type === 'table-mapping') {
+    //   xAxisGroup.selectAll('text').style('text-anchor', 'middle')
+    // } else {
+    //   xAxisGroup
+    //     .selectAll('text')
+    //     .attr('transform', type === 'table-mapping' ? null : 'rotate(-45)')
+    //     .style('text-anchor', 'end')
+    //     .attr('dx', '-.8em')
+    //     .attr('dy', '.15em')
+    // }
   }
 
   const drawYAxis = (type, toLeft, yScale) => {
@@ -232,6 +281,24 @@ export function useD3Base(context) {
             .attr('fill', '#4A5568')
             .attr('font-size', '10px')
             .attr('font-family', 'Arial, sans-serif') // 刻度文字顏色、大小和字體
+        })
+    } else if (type === 'hot-zone') {
+      const uniqueY = [...new Set(data.map((d) => d[yKey]))]
+
+      yAxis = d3.axisLeft(yScale).tickSize(0)
+      svg
+        .append('g')
+        .attr('class', 'y-axis')
+        .style('user-select', 'none')
+        .attr('transform', `translate(${toLeft},0)`)
+        .call(yAxis)
+        .call((g) => {
+          g.select('.domain').remove()
+          g.selectAll('.tick text')
+            .attr('transform', 'rotate(0)')
+            .style('text-anchor', 'middle')
+            .attr('dx', -5)
+            .attr('dy', (d) => (d > uniqueY.length / 2 ? 8 : 0))
         })
     } else {
       yAxis = d3.axisLeft(yScale).tickSize(0)

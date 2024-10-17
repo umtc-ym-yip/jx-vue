@@ -44,6 +44,18 @@ export const colorArray = [
   '#FFE4B5'
 ]
 
+export const hotZoneColorArray = [
+  '#2c7bb6',
+  '#00a6ca',
+  '#00ccbc',
+  '#90eb9d',
+  '#dfdf13',
+  '#f9d057',
+  '#f29e2e',
+  '#e76818',
+  '#d7191c'
+]
+
 // 1%100->1 ,101%100->1 ,201%100->1 循環使用
 export function getColor(index) {
   return colorArray[index % colorArray.length]

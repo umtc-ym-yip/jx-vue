@@ -22,7 +22,8 @@ const d3Configs = [
   { path: '/pointtrend', name: 'PointTrend' },
   { path: '/panelmapping', name: 'PanelMapping' },
   { path: '/stackbartrend', name: 'StackBarTrend' },
-  { path: '/pareto', name: 'Pareto' }
+  { path: '/pareto', name: 'Pareto' },
+  { path: '/hotzone', name: 'HotZone' }
 ]
 
 // 創建一個函數來生成路由配置

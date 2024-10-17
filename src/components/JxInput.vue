@@ -11,8 +11,9 @@
       :required="required"
       :disabled="disabled"
       v-bind="type === 'number' ? { min, max, step } : {}"
-      class="w-full px-3 py-2 border rounded-md outline-none transition-all duration-200 ease-in-out"
+      class="outline-none transition-all duration-200 ease-in-out"
       :class="[
+        customClass,
         errors.length
           ? 'border-error-light focus:ring-2 focus:ring-error-light focus:ring-opacity-50'
           : 'border-secondary-light focus:border-primary-light focus:ring-2 focus:ring-primary-light focus:ring-opacity-50',
@@ -83,6 +84,10 @@ const props = defineProps({
   step: {
     type: Number,
     default: 0.1
+  },
+  customClass: {
+    type: String,
+    default: 'w-full px-3 py-2 border rounded-md'
   }
 })
 const inputValue = computed({

@@ -1,13 +1,22 @@
 import * as d3 from 'd3'
-import { getColorBySeries } from '../../utils/d3/colorUtils.js'
+import { getColorBySeries, hotZoneColorArray } from '../../utils/d3/colorUtils.js'
 import { useD3Alarm } from './useD3Alarm.js'
 
 export function useD3Element(context) {
-  const { width, height, margin, data, xKey, yKey, xType, seriesKey, seriesKeyArray } =
+  const { width, height, margin, data, xKey, yKey, xType, seriesKey, seriesKeyArray, chartType } =
     context.props
   let colorScale
+  if (chartType === 'hot-zone') {
+    const countArray = [...data.map((item) => item.count)]
+    countArray.sort((a, b) => Number(a) - Number(b))
 
-  if (seriesKey) {
+    const step = countArray[countArray.length - 1] / 10
+    const heatValueAry = []
+    for (let i = 0; i < 11; i++) {
+      heatValueAry.push(step * i)
+    }
+    colorScale = d3.scaleLinear().range(hotZoneColorArray).domain(heatValueAry)
+  } else if (seriesKey) {
     const uniqueSeries = [...new Set(data.map((d) => d[seriesKey]))]
     colorScale = d3.scaleOrdinal().domain(uniqueSeries).range(getColorBySeries(uniqueSeries))
   } else if (seriesKeyArray) {
@@ -431,6 +440,130 @@ export function useD3Element(context) {
       .on('click', onClick)
   }
 
+  function drawHotZoneLegend(options = {}) {
+    const { svg, onRectMouseOver, onRectMouseOut, onTextMouseOver, onTextMouseOut, onClick } =
+      options
+    const countArray = [...data.map((item) => item.count)]
+    countArray.sort((a, b) => Number(a) - Number(b))
+
+    const step = countArray[countArray.length - 1] / 10
+    const heatValueAry = []
+    for (let i = 0; i < 11; i++) {
+      heatValueAry.push(step * i)
+    }
+
+    const legendColorScale = d3
+      .scaleLinear()
+      .range([margin.top, height - margin.bottom])
+      .domain([Number(heatValueAry[heatValueAry.length - 1]), 0])
+      .nice()
+
+    const defs = svg.append('defs')
+
+    defs
+      .append('linearGradient')
+      .attr('id', 'gradient-ygb-colors')
+      .attr('x1', '0%')
+      .attr('y1', '100%')
+      .attr('x2', '0%')
+      .attr('y2', '0%')
+      .selectAll('stop')
+      .data(hotZoneColorArray)
+      .enter()
+      .append('stop')
+      .attr('offset', (d, i) => i / (hotZoneColorArray.length - 1))
+      .attr('stop-color', (d) => d)
+
+    const legendWrap = svg.append('g').attr('class', 'legendWrapper')
+
+    legendWrap
+      .append('rect')
+      .attr('class', 'legendRect')
+      .attr('x', width - margin.right + 10)
+      .attr('y', margin.top)
+      .attr('width', 10)
+      .attr('height', height - margin.bottom * 2)
+      .attr('fill', 'none')
+      .attr('stroke', 'rgba(0,0,0,0.1)')
+      .attr('stroke-width', 1)
+      .attr('rx', 4)
+
+    legendWrap.select('.legendRect').style('fill', 'url(#gradient-ygb-colors)')
+
+    legendWrap
+      .append('g')
+      .attr('class', 'color-xAxis')
+      .attr('transform', (d) => `translate(${width - margin.right + 20},0)`)
+      .call(
+        d3
+          .axisRight(legendColorScale)
+          .tickFormat((d) => (Number.isInteger(d) ? `${d}顆` : ''))
+          .ticks(4)
+      )
+      .attr('font-size', 12)
+
+    legendWrap
+      .selectAll('.color-xAxis .domain,.color-xAxis .tick line')
+      .attr('stroke', 'rgba(0,0,0,0.1)')
+  }
+  function drawHotZone(options = {}) {
+    const { innerContent, xScale, yScale, onMouseOver, onMouseOut, onClick } = options
+
+    innerContent.selectAll(`.hot-zone`).remove()
+
+    const uniqueX = [...new Set(data.map((d) => d[xKey]))]
+    const uniqueY = [...new Set(data.map((d) => d[yKey]))]
+    innerContent
+      .selectAll('hot-zone')
+      .data(data)
+      .enter()
+      .append('rect')
+      .attr('class', 'bar')
+      .attr('x', (d) => (d[xKey] > uniqueX.length / 2 ? xScale(d[xKey]) + 3 : xScale(d[xKey]) - 3))
+      .attr('y', (d) => (d[yKey] > uniqueY.length / 2 ? yScale(d[yKey]) + 3 : yScale(d[yKey]) - 3))
+      .attr('rx', 3)
+      .attr('ry', 3)
+      .attr('width', xScale.bandwidth())
+      .attr('height', yScale.bandwidth())
+      .attr('fill', (d) => colorScale(d.count))
+      .attr('stroke', 'white')
+      .attr('stroke-width', 1)
+      .attr('opacity', 0.9)
+  }
+  function drawHotZoneText(options = {}) {
+    const { innerContent, xScale, yScale, onMouseOver, onMouseOut, onClick } = options
+
+    const uniqueX = [...new Set(data.map((d) => d[xKey]))]
+    const uniqueY = [...new Set(data.map((d) => d[yKey]))]
+
+    innerContent
+      .append('g')
+      .attr('class', 'heat-map-text')
+      .selectAll('text')
+      .data(data)
+      .enter()
+      .append('text')
+      .attr('class', 'heat-text')
+      .style('pointer-events', 'none')
+      .style('cursor', 'default')
+      .style('font-size', '14px')
+      .style('font-weight', 'bold')
+      .attr('fill', '#fff')
+      .attr('text-anchor', 'middle')
+      .attr('class', 'fw-bold')
+      .text((d) => d.count)
+      .attr('x', (d) =>
+        d[xKey] > uniqueX.length / 2
+          ? xScale(d[xKey]) + 3 + xScale.bandwidth() / 2
+          : xScale(d[xKey]) - 3 + xScale.bandwidth() / 2
+      )
+      .attr('y', (d) =>
+        d[yKey] > uniqueY.length / 2
+          ? yScale(d[yKey]) + 10 + yScale.bandwidth() / 2
+          : yScale(d[yKey]) + 3 + yScale.bandwidth() / 2
+      )
+  }
+
   return {
     drawPoints,
     drawLabel,
@@ -439,6 +572,9 @@ export function useD3Element(context) {
     drawLegend,
     drawStackBars,
     drawBars,
-    drawStackLegend
+    drawStackLegend,
+    drawHotZone,
+    drawHotZoneLegend,
+    drawHotZoneText
   }
 }
