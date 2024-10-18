@@ -3,7 +3,7 @@ import { ref, nextTick } from 'vue'
 
 export function useD3Interaction(context) {
   const { props, chartContainer } = context
-  const { seriesKey } = props
+  const { seriesKey, xKey, yKey } = props
 
   // Tooltip
   const tooltip = ref(null)
@@ -22,21 +22,7 @@ export function useD3Interaction(context) {
   function pointMouseOver(svg, innerContent, pointSize) {
     return function (event, d, element) {
       d3.select(element).transition().duration(200).attr('r', pointSize)
-      const [x, y] = d3.pointer(event, chartContainer.value)
-
-      const svgWidth = svg.node().getBoundingClientRect().width
-      tooltipLoc.value = { x: 0, y: 0 }
-      tooltipData.value = d
-      tooltipStatus.value = 'point'
-      tooltipShow.value = true
-      nextTick(() => {
-        let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
-        let tooltipX = x + tooltipWidth > svgWidth ? x - tooltipWidth - 10 : x + 10
-        let tooltipY = y - 30
-
-        tooltipLoc.value = { x: tooltipX, y: tooltipY }
-        hiddenTooltip.value = false
-      })
+      updateTooltipPosition(event, d, svg, 'point')
       otherPointFade(event, d, innerContent)
       otherLineFade(event, d, innerContent)
     }
@@ -44,8 +30,7 @@ export function useD3Interaction(context) {
   function pointMouseOut(innerContent, pointSize) {
     return function (event, d, element) {
       d3.select(element).transition().duration(200).attr('r', pointSize)
-      tooltipShow.value = false
-      hiddenTooltip.value = true
+      resetTooltipPosition()
       otherPointReset(event, d, innerContent, pointSize)
       otherLineReset(event, d, innerContent)
     }
@@ -54,30 +39,14 @@ export function useD3Interaction(context) {
   function stackBarMouseOver(svg, innerContent) {
     return function (event, d, element) {
       d3.select(element).transition().duration(200).attr('transform', 'scale(1.005)')
-
-      const [x, y] = d3.pointer(event, chartContainer.value)
-
-      const svgWidth = svg.node().getBoundingClientRect().width
-      tooltipLoc.value = { x: 0, y: 0 }
-      tooltipData.value = d
-      tooltipStatus.value = 'stack'
-      tooltipShow.value = true
-      nextTick(() => {
-        let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
-        let tooltipX = x + tooltipWidth > svgWidth ? x - tooltipWidth - 10 : x + 10
-        let tooltipY = y - 30
-
-        tooltipLoc.value = { x: tooltipX, y: tooltipY }
-        hiddenTooltip.value = false
-      })
+      updateTooltipPosition(event, d, svg, 'stack')
       othersStackBarFade(event, d, innerContent)
     }
   }
   function stackBarMouseOut(innerContent) {
     return function (event, d, element) {
       d3.select(element).transition().duration(200).attr('transform', 'scale(1)')
-      tooltipShow.value = false
-      hiddenTooltip.value = true
+      resetTooltipPosition()
       othersStackBarReset(event, d, innerContent)
     }
   }
@@ -85,28 +54,13 @@ export function useD3Interaction(context) {
   function barMouseOver(svg, innerContent) {
     return function (event, d, element) {
       d3.select(element).transition().duration(200).attr('transform', 'scale(1.005)')
-      const [x, y] = d3.pointer(event, chartContainer.value)
-
-      const svgWidth = svg.node().getBoundingClientRect().width
-      tooltipLoc.value = { x: 0, y: 0 }
-      tooltipData.value = d
-      tooltipStatus.value = 'single-bar'
-      tooltipShow.value = true
-      nextTick(() => {
-        let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
-        let tooltipX = x + tooltipWidth > svgWidth ? x - tooltipWidth - 10 : x + 10
-        let tooltipY = y - 30
-
-        tooltipLoc.value = { x: tooltipX, y: tooltipY }
-        hiddenTooltip.value = false
-      })
+      updateTooltipPosition(event, d, svg, 'single-bar')
     }
   }
   function barMouseOut(innerContent) {
     return function (event, d, element) {
       d3.select(element).transition().duration(200).attr('transform', 'scale(1)')
-      tooltipShow.value = false
-      hiddenTooltip.value = true
+      resetTooltipPosition()
     }
   }
 
@@ -139,6 +93,46 @@ export function useD3Interaction(context) {
       otherPointReset(event, d, innerContent)
       otherLineReset(event, d, innerContent)
     }
+  }
+
+  function hotZoneMouseOver(innerContent) {
+    return function (event, d, element) {
+      updateTooltipPosition(event, d, innerContent, 'hot-zone')
+      othersHotZoneFade(event, d, innerContent)
+    }
+  }
+  function hotZoneMouseOut(innerContent) {
+    return function (event, d, element) {
+      resetTooltipPosition()
+      othersHotZoneReset(event, d, innerContent)
+    }
+  }
+  function othersHotZoneFade(event, d, innerContent) {
+    const allHotZone = innerContent.selectAll('.hot-zone')
+
+    const othersHotZone = allHotZone.filter((i) => i.value !== d.value)
+    othersHotZone.each((d, i, nodes) => {
+      const currentColor = d3.select(nodes[i]).attr('fill')
+      if (currentColor) {
+        const color = d3.color(currentColor)
+        color.opacity = 0.2
+        d3.select(nodes[i]).transition().duration(200).attr('fill', color)
+      }
+    })
+  }
+
+  function othersHotZoneReset(event, d, innerContent) {
+    const allHotZone = innerContent.selectAll('.hot-zone')
+    const othersHotZone = allHotZone.filter((i) => i.value !== d.value)
+    othersHotZone.each((d, i, nodes) => {
+      const currentColor = d3.select(nodes[i]).attr('fill')
+      if (currentColor) {
+        const color = d3.color(currentColor)
+        color.opacity = 1
+
+        d3.select(nodes[i]).transition().duration(200).attr('fill', color)
+      }
+    })
   }
 
   function otherPointFade(event, d, innerContent) {
@@ -220,6 +214,7 @@ export function useD3Interaction(context) {
       }
     })
   }
+
   // function otherLegendFade(event, d,innerContent) {
   //   const legend = innerContent.selectAll(`.tags-legend-rect`)
   //   const othersLegend = legend.filter((i) => i[seriesKey] !== d[seriesKey])
@@ -248,6 +243,30 @@ export function useD3Interaction(context) {
   //   const text = innerContent.selectAll(`.tags-legend-text`)
   //   text.filter((i) => i[seriesKey] !== d[seriesKey]).attr('fill', 'black')
   // }
+  function updateTooltipPosition(event, d, svg, status) {
+    const [x, y] = d3.pointer(event, chartContainer.value)
+
+    const svgWidth = svg.node().getBoundingClientRect().width
+    tooltipLoc.value = { x: 0, y: 0 }
+    tooltipData.value = d
+    tooltipStatus.value = status
+    tooltipShow.value = true
+    nextTick(() => {
+      let tooltipWidth = tooltip.value?.offsetWidth || externalTooltipRef.value?.offsetWidth
+      let tooltipX = x + tooltipWidth > svgWidth ? x - tooltipWidth - 10 : x + 10
+      let tooltipY = y - 30
+
+      tooltipLoc.value = { x: tooltipX, y: tooltipY }
+      hiddenTooltip.value = false
+    })
+  }
+  function resetTooltipPosition() {
+    tooltipLoc.value = { x: 0, y: 0 }
+    tooltipData.value = {}
+    tooltipStatus.value = ''
+    tooltipShow.value = false
+    hiddenTooltip.value = true
+  }
 
   return {
     tooltip,
@@ -268,6 +287,8 @@ export function useD3Interaction(context) {
     stackBarMouseOver,
     stackBarMouseOut,
     barMouseOver,
-    barMouseOut
+    barMouseOut,
+    hotZoneMouseOver,
+    hotZoneMouseOut
   }
 }

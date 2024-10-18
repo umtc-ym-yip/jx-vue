@@ -79,8 +79,16 @@ const context = useD3Context(props, chartContainer, slots)
 const { initChart, drawXAxis, drawYAxis, createScales } = useD3Base(context)
 const { drawHotZone, drawHotZoneLegend, drawHotZoneText } = useD3Element(context)
 
-const { tooltip, tooltipShow, tooltipLoc, tooltipData, hiddenTooltip, setTooltipRef } =
-  useD3Interaction(context)
+const {
+  tooltip,
+  tooltipShow,
+  tooltipLoc,
+  tooltipData,
+  hiddenTooltip,
+  setTooltipRef,
+  hotZoneMouseOver,
+  hotZoneMouseOut
+} = useD3Interaction(context)
 
 // 補上rect mouseover 事件
 function drawChart() {
@@ -103,7 +111,9 @@ function drawChart() {
   drawHotZone({
     innerContent,
     xScale,
-    yScale
+    yScale,
+    onMouseOver: hotZoneMouseOver(innerContent),
+    onMouseOut: hotZoneMouseOut(innerContent)
   })
   drawHotZoneLegend({
     svg

@@ -7,10 +7,10 @@ export function useD3Element(context) {
     context.props
   let colorScale
   if (chartType === 'hot-zone') {
-    const countArray = [...data.map((item) => item.count)]
-    countArray.sort((a, b) => Number(a) - Number(b))
+    const valueArray = [...data.map((item) => item.value)]
+    valueArray.sort((a, b) => Number(a) - Number(b))
 
-    const step = countArray[countArray.length - 1] / 10
+    const step = valueArray[valueArray.length - 1] / 10
     const heatValueAry = []
     for (let i = 0; i < 11; i++) {
       heatValueAry.push(step * i)
@@ -443,10 +443,10 @@ export function useD3Element(context) {
   function drawHotZoneLegend(options = {}) {
     const { svg, onRectMouseOver, onRectMouseOut, onTextMouseOver, onTextMouseOut, onClick } =
       options
-    const countArray = [...data.map((item) => item.count)]
-    countArray.sort((a, b) => Number(a) - Number(b))
+    const valueArray = [...data.map((item) => item.value)]
+    valueArray.sort((a, b) => Number(a) - Number(b))
 
-    const step = countArray[countArray.length - 1] / 10
+    const step = valueArray[valueArray.length - 1] / 10
     const heatValueAry = []
     for (let i = 0; i < 11; i++) {
       heatValueAry.push(step * i)
@@ -518,17 +518,25 @@ export function useD3Element(context) {
       .data(data)
       .enter()
       .append('rect')
-      .attr('class', 'bar')
+      .style('cursor', 'pointer')
+      .attr('class', 'hot-zone')
       .attr('x', (d) => (d[xKey] > uniqueX.length / 2 ? xScale(d[xKey]) + 3 : xScale(d[xKey]) - 3))
       .attr('y', (d) => (d[yKey] > uniqueY.length / 2 ? yScale(d[yKey]) + 3 : yScale(d[yKey]) - 3))
       .attr('rx', 3)
       .attr('ry', 3)
       .attr('width', xScale.bandwidth())
       .attr('height', yScale.bandwidth())
-      .attr('fill', (d) => colorScale(d.count))
+      .attr('fill', (d) => colorScale(d.value))
       .attr('stroke', 'white')
       .attr('stroke-width', 1)
       .attr('opacity', 0.9)
+      .on('mouseover', function (event, d) {
+        if (onMouseOver) onMouseOver(event, d, this)
+      })
+      .on('mouseout', function (event, d) {
+        if (onMouseOut) onMouseOut(event, d, this)
+      })
+      .on('click', onClick)
   }
   function drawHotZoneText(options = {}) {
     const { innerContent, xScale, yScale, onMouseOver, onMouseOut, onClick } = options
@@ -551,7 +559,7 @@ export function useD3Element(context) {
       .attr('fill', '#fff')
       .attr('text-anchor', 'middle')
       .attr('class', 'fw-bold')
-      .text((d) => d.count)
+      .text((d) => d.value)
       .attr('x', (d) =>
         d[xKey] > uniqueX.length / 2
           ? xScale(d[xKey]) + 3 + xScale.bandwidth() / 2
