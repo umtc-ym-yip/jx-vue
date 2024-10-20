@@ -15,14 +15,7 @@
 /&gt;
         </pre>
       </template>
-      <D3HotZone
-        v-if="hotZoneData.length > 0"
-        width="600"
-        height="450"
-        :data="hotZoneData"
-        xKey="x"
-        yKey="y"
-      />
+      <D3HotZone v-if="hotZoneData.length > 0" width="600" height="450" :data="hotZoneData" xKey="x" yKey="y" />
     </StorySection>
     <StorySection title="屬性說明">
       <template #props>
@@ -30,7 +23,7 @@
           <li>
             <span class="font-semibold">data:</span>
             圖表數據，必須是一個對象數組。每個對象應包含以下屬性:
-            <ul class="ml-4 mt-2">
+            <ul class="mt-2 ml-4">
               <li><code>x</code>: X 軸的值 (數字或字符串)</li>
               <li><code>y</code>: Y 軸的值 (數字或字符串)</li>
               <li><code>value</code>: 該點的數量或強度 (數字)</li>
@@ -65,14 +58,7 @@
 /&gt;
         </pre>
       </template>
-      <D3HotZone
-        v-if="hotZoneData2.length > 0"
-        :data="hotZoneData2"
-        xKey="x"
-        yKey="y"
-        width="600"
-        height="450"
-      />
+      <D3HotZone v-if="hotZoneData2.length > 0" :data="hotZoneData2" xKey="x" yKey="y" width="600" height="450" />
     </StorySection>
 
     <StorySection title="自定義 Tooltip">
@@ -90,10 +76,10 @@
     &lt;div
       v-if="show"
       :ref="setTooltipRef"
-      class="absolute bg-white border border-gray-300 rounded-md shadow-md p-3 text-sm"
+      class="absolute p-3 text-sm bg-white border border-gray-300 rounded-md shadow-md"
       :style="{ left: `${x}px`, top: `${y}px` }"
     &gt;
-      &lt;h3 class="font-bold text-lg mb-2"&gt;自定義 Tooltip&lt;/h3&gt;
+      &lt;h3 class="mb-2 text-lg font-bold"&gt;自定義 Tooltip&lt;/h3&gt;
       &lt;p class="mb-1"&gt;X: { data.x }, Y: { data.y }&lt;/p&gt;
       &lt;p&gt;value: { data.value }&lt;/p&gt;
     &lt;/div&gt;
@@ -103,13 +89,10 @@
       </template>
       <D3HotZone v-if="hotZoneData.length > 0" :data="hotZoneData" xKey="x" yKey="y">
         <template #tooltip="{ show, data, x, y, setTooltipRef }">
-          <div
-            v-if="show"
-            :ref="setTooltipRef"
-            class="absolute bg-white border border-gray-300 rounded-md shadow-md p-3 text-sm"
-            :style="{ left: `${x}px`, top: `${y}px` }"
-          >
-            <h3 class="font-bold text-lg mb-2">自定義 Tooltip</h3>
+          <div v-if="show" :ref="setTooltipRef"
+            class="absolute p-3 text-sm bg-white border border-gray-300 rounded-md shadow-md"
+            :style="{ left: `${x}px`, top: `${y}px` }">
+            <h3 class="mb-2 text-lg font-bold">自定義 Tooltip</h3>
             <p class="mb-1">X: {{ data.x }}, Y: {{ data.y }}</p>
             <p>value: {{ data.value }}</p>
           </div>
@@ -121,6 +104,7 @@
 
 <script setup>
 import * as d3 from 'd3'
+import axios from 'axios'
 
 import { ref, onMounted } from 'vue'
 import D3HotZone from '@/components/d3/D3HotZone.vue'
@@ -156,220 +140,191 @@ const hotZoneData2 = ref([])
 
 const gerberContainer = ref(null)
 async function fetchGerberFile(url) {
-  const response = await fetch(url)
-  return await response.text()
+  const response = await axios.get(url)
+  return response.data
+}
+
+function parseGerberFile(gerberContent) {
+  const lines = gerberContent.split('\n');
+  const state = {
+    format: null,
+    unit: null,
+    apertures: {},
+    currentAperture: null,
+    coordinates: [],
+    layerPolarity: 'dark',
+    layerName: null,
+    scale: 1,
+    currentX: 0,
+    currentY: 0,
+    interpolationMode: 'linear',
+    regionMode: false,
+    quadrantMode: 'single',
+  };
+
+  function parseFormatSpecification(line) {
+    const match = line.match(/%FS([LT])([AI])X(\d)(\d)Y(\d)(\d)\*%/);
+    if (match) {
+      state.format = {
+        zeroOmission: match[1] === 'L' ? 'leading' : 'trailing',
+        notation: match[2] === 'A' ? 'absolute' : 'incremental',
+        xInteger: parseInt(match[3]),
+        xDecimal: parseInt(match[4]),
+        yInteger: parseInt(match[5]),
+        yDecimal: parseInt(match[6]),
+      };
+      state.scale = Math.pow(10, -state.format.xDecimal);
+    }
+  }
+
+  function parseCoordinate(line, index) {
+    const xMatch = line.match(/X(-?\d+)/);
+    const yMatch = line.match(/Y(-?\d+)/);
+    const dMatch = line.match(/D0[123]/);
+    const iMatch = line.match(/I(-?\d+)/);
+    const jMatch = line.match(/J(-?\d+)/);
+
+    let x = xMatch ? parseInt(xMatch[1]) * state.scale : state.currentX;
+    let y = yMatch ? parseInt(yMatch[1]) * state.scale : state.currentY;
+    const d = dMatch ? dMatch[0].slice(1) : null;
+    const i = iMatch ? parseInt(iMatch[1]) * state.scale : 0;
+    const j = jMatch ? parseInt(jMatch[1]) * state.scale : 0;
+
+    state.currentX = x;
+    state.currentY = y;
+
+    return { x, y, command: d, i, j, index, aperture: state.currentAperture, interpolationMode: state.interpolationMode };
+  }
+
+  lines.forEach((line, index) => {
+    line = line.trim();
+    if (line.startsWith('%FS')) parseFormatSpecification(line);
+    else if (line.startsWith('%MO')) state.unit = line === '%MOMM*%' ? 'mm' : 'inch';
+    else if (line.startsWith('%ADD')) {
+      const match = line.match(/%ADD(\d+)([A-Z]),?([^*]*)\*%/);
+      if (match) {
+        const [, number, shape, params] = match;
+        state.apertures[number] = { shape, params: params ? params.split(',').map(Number) : [] };
+      }
+    }
+    else if (line.startsWith('%LP')) state.layerPolarity = line === '%LPD*%' ? 'dark' : 'clear';
+    else if (line.startsWith('%LN')) state.layerName = line.slice(3, -2);
+    else if (line === 'G01*') state.interpolationMode = 'linear';
+    else if (line === 'G02*') state.interpolationMode = 'clockwise';
+    else if (line === 'G03*') state.interpolationMode = 'counterclockwise';
+    else if (line.startsWith('G54')) state.currentAperture = line.match(/D(\d+)/)[1];
+    else if (line === 'G36*') state.regionMode = true;
+    else if (line === 'G37*') state.regionMode = false;
+    else if (line === 'G74*') state.quadrantMode = 'single';
+    else if (line === 'G75*') state.quadrantMode = 'multi';
+    else if (line.match(/^[XYIJD]/)) {
+      const coord = parseCoordinate(line, index);
+      state.coordinates.push(coord);
+    }
+  });
+
+  return state;
+}
+
+function renderGerber(state, svgElement) {
+  const svg = d3.select(svgElement).style('border', '1px solid black').append('svg').attr('width', 600).attr('height', 600);
+
+  const xExtent = d3.extent(state.coordinates, d => d.x);
+  const yExtent = d3.extent(state.coordinates, d => d.y);
+
+  const xScale = d3.scaleLinear()
+    .domain([xExtent[0] - 1, xExtent[1] + 1])
+    .range([50, 550]);
+  const yScale = d3.scaleLinear()
+    .domain([yExtent[0] - 1, yExtent[1] + 1])
+    .range([550, 50]);
+
+  let currentPosition = null;
+  let isDrawing = false;
+  let currentPath = null;
+
+  function startPath(coord) {
+    console.log('startPath', coord)
+    currentPath = svg.append("path")
+      .attr("fill", "none")
+      .attr("stroke", state.layerPolarity === 'dark' ? "red" : "white")
+      .attr("stroke-width", 1);
+    return `M ${xScale(coord.x)} ${yScale(coord.y)}`;
+  }
+
+  function drawLine(coord) {
+    return `L ${xScale(coord.x)} ${yScale(coord.y)}`;
+  }
+
+  function drawArc(start, end) {
+    const rx = Math.abs(end.i);
+    const ry = Math.abs(end.j);
+    const xAxisRotation = 0;
+    const largeArcFlag = state.quadrantMode === 'multi' ? 1 : 0;
+    const sweepFlag = end.interpolationMode === 'clockwise' ? 1 : 0;
+    return `A ${xScale(rx) - xScale(0)} ${yScale(0) - yScale(ry)} ${xAxisRotation} ${largeArcFlag} ${sweepFlag} ${xScale(end.x)} ${yScale(end.y)}`;
+  }
+
+  function drawFlash(coord) {
+    const aperture = state.apertures[coord.aperture];
+    if (aperture && aperture.shape === 'C') {
+      svg.append("circle")
+        .attr("cx", xScale(coord.x))
+        .attr("cy", yScale(coord.y))
+        .attr("r", (aperture.params[0] / 2) * (xScale(1) - xScale(0)))
+        .attr("fill", state.layerPolarity === 'dark' ? "black" : "white");
+    }
+  }
+
+  state.coordinates.forEach((coord, index) => {
+    switch (coord.command) {
+      case '02': // Move
+        currentPosition = coord;
+        isDrawing = false;
+        break;
+      case '01': // Draw
+        if (!isDrawing) {
+          if (!currentPosition) {
+            console.error('Trying to draw without a current position');
+            return;
+          }
+          currentPath = startPath(currentPosition);
+          isDrawing = true;
+        }
+        if (coord.interpolationMode === 'linear') {
+          currentPath += drawLine(coord);
+        } else {
+          currentPath += drawArc(currentPosition, coord);
+        }
+        currentPosition = coord;
+        break;
+      case '03': // Flash
+        drawFlash(coord);
+        break;
+    }
+  });
+
+  if (currentPath) {
+    svg.select("path:last-child").attr("d", currentPath);
+  }
+
+  if (state.regionMode) {
+    // Handle region mode (area fill) if necessary
+  }
 }
 
 onMounted(async () => {
   hotZoneData.value = generateData()
   hotZoneData2.value = generateData()
-  const gerberContent = await fetchGerberFile('http://10.22.94.222/3273053a01-cus-l9.gbr')
-  console.log('gerberContent', gerberContent)
 
-  const lines = gerberContent.split('\n')
-  console.log('lines', lines)
-  const elements = []
-  let currentAperture = null
-  let scale = 0.00001 // 假設單位是毫米，並且坐標格式是 3.5
-  let currentX = 0,
-    currentY = 0
-  let inRegion = false
-  let currentPath = []
-  let polarity = 'dark'
-  let currentTrack = []
 
-  function addTrack() {
-    if (currentTrack.length > 1) {
-      elements.push({
-        type: 'track',
-        points: currentTrack,
-        aperture: currentAperture,
-        polarity
-      })
-    }
-    currentTrack = []
+  const gerberContent = await fetchGerberFile('http://localhost:3000/gerber');
+  if (gerberContent) {
+    const gerberState = parseGerberFile(gerberContent);
+    console.log('Parsed Gerber state:', gerberState);
+    renderGerber(gerberState, gerberContainer.value);
+  } else {
+    console.error('Failed to fetch gerber content');
   }
-
-  lines.forEach((line) => {
-    if (line.startsWith('%FSLAX')) {
-      // 解析坐標格式
-      const format = line.match(/%FSLAX(\d)(\d)Y\d\d\*%/)
-      if (format) {
-        console.log('format', format)
-        const [, integerPart, decimalPart] = format
-
-        scale = Math.pow(10, -parseInt(decimalPart))
-        console.log('scale', scale)
-      }
-    } else if (line.startsWith('%ADD')) {
-      const match = line.match(/%ADD(\d+)([C,R]),[^*]+\*%/)
-      if (match) {
-        const [, id, shape, size] = match
-        elements.push({ type: 'aperture', id, shape, size: parseFloat(size) })
-      }
-    } else if (line.startsWith('G54D')) {
-      currentAperture = line.match(/G54D(\d+)/)[1]
-    } else if (line.match(/X-?\d+Y-?\d+D0[123]/)) {
-      const match = line.match(/X(-?\d+)Y(-?\d+)D0([123])/)
-      if (match) {
-        const [, x, y, d] = match
-        const newX = parseInt(x) * scale
-        const newY = parseInt(y) * scale
-        if (d === '3') {
-          addTrack() // 結束當前軌跡
-          elements.push({
-            type: 'flash',
-            x: newX,
-            y: newY,
-            aperture: currentAperture,
-            polarity
-          })
-        } else if (d === '1') {
-          if (currentTrack.length === 0) {
-            currentTrack.push({ x: currentX, y: currentY })
-          }
-          currentTrack.push({ x: newX, y: newY })
-        } else if (d === '2') {
-          addTrack() // 結束當前軌跡
-        }
-        currentX = newX
-        currentY = newY
-      }
-    } else if (line.startsWith('G36')) {
-      addTrack() // 結束當前軌跡
-      inRegion = true
-      currentPath = []
-    } else if (line.startsWith('G37')) {
-      inRegion = false
-      if (currentPath.length > 0) {
-        elements.push({
-          type: 'region',
-          path: currentPath,
-          polarity
-        })
-      }
-    } else if (inRegion && line.match(/X-?\d+Y-?\d+D0[12]/)) {
-      const match = line.match(/X(-?\d+)Y(-?\d+)D0([12])/)
-      if (match) {
-        const [, x, y, d] = match
-        const newX = parseInt(x) * scale
-        const newY = parseInt(y) * scale
-        currentPath.push({ x: newX, y: newY, command: d === '1' ? 'L' : 'M' })
-      }
-    } else if (line.startsWith('%LPD*%')) {
-      polarity = 'dark'
-    } else if (line.startsWith('%LPC*%')) {
-      polarity = 'clear'
-    }
-  })
-
-  // 加最後一個軌跡（如果有的話）
-  if (currentTrack.length > 0) {
-    elements.push({
-      type: 'track',
-      points: currentTrack,
-      aperture: currentAperture,
-      polarity
-    })
-  }
-
-  console.log('elements', elements)
-  const width = 800
-  const height = 600
-  const margin = { top: 20, right: 20, bottom: 20, left: 20 }
-
-  const svg = d3
-    .select(gerberContainer.value)
-    .append('svg')
-    .attr('width', width)
-    .attr('height', height)
-
-  const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`)
-
-  const allPoints = elements.flatMap((e) => {
-    if (e.type === 'flash') return [{ x: e.x, y: e.y }]
-    if (e.type === 'line')
-      return [
-        { x: e.x1, y: e.y1 },
-        { x: e.x2, y: e.y2 }
-      ]
-    if (e.type === 'region') return e.path
-    if (e.type === 'track') return e.points
-    return []
-  })
-  console.log('allPoints', allPoints)
-  const xExtent = d3.extent(allPoints, (d) => d.x)
-  const yExtent = d3.extent(allPoints, (d) => d.y)
-
-  // 調整比例尺以確保負值也能正確顯示
-
-  const xScale = d3
-    .scaleLinear()
-    .domain([Math.min(0, xExtent[0]), Math.max(0, xExtent[1])])
-    .range([0, width - margin.left - margin.right])
-
-  const yScale = d3
-    .scaleLinear()
-    .domain([Math.min(0, yExtent[0]), Math.max(0, yExtent[1])])
-    .range([height - margin.top - margin.bottom, 0])
-
-  // 繪製閃光
-  g.selectAll('circle.flash')
-    .data(elements.filter((e) => e.type === 'flash'))
-    .enter()
-    .append('circle')
-    .attr('class', 'flash')
-    .attr('cx', (d) => xScale(d.x))
-    .attr('cy', (d) => yScale(d.y))
-    .attr('r', 2)
-    .attr('fill', (d) => (d.polarity === 'dark' ? 'black' : 'white'))
-    .attr('stroke', 'none')
-
-  //繪製線段
-  g.selectAll('line.trace')
-    .data(elements.filter((e) => e.type === 'line'))
-    .enter()
-    .append('line')
-    .attr('class', 'trace')
-    .attr('x1', (d) => xScale(d.x1))
-    .attr('y1', (d) => yScale(d.y1))
-    .attr('x2', (d) => xScale(d.x2))
-    .attr('y2', (d) => yScale(d.y2))
-    .attr('stroke', (d) => (d.polarity === 'dark' ? 'black' : 'white'))
-    .attr('stroke-width', 1)
-
-  const regionPath = d3
-    .line()
-    .x((d) => xScale(d.x))
-    .y((d) => yScale(d.y))
-
-  g.selectAll('path.region')
-    .data(elements.filter((e) => e.type === 'region'))
-    .enter()
-    .append('path')
-    .attr('class', 'region')
-    .attr('d', (d) => regionPath(d.path))
-    .attr('fill', (d) => (d.polarity === 'dark' ? 'black' : 'white'))
-
-  // 繪製軌跡
-  const trackPath = d3
-    .line()
-    .x((d) => xScale(d.x))
-    .y((d) => yScale(d.y))
-    .curve(d3.curveLinear)
-
-  g.selectAll('path.track')
-    .data(elements.filter((e) => e.type === 'track'))
-    .enter()
-    .append('path')
-    .attr('class', 'track')
-    .attr('d', (d) => {
-      console.log('d', d)
-      // 只使用每個 track 的前兩個點，確保它是一個獨立的線段
-      return trackPath(d.points.slice(0, 2))
-    })
-    .attr('stroke', (d) => (d.polarity === 'dark' ? 'black' : 'white'))
-    .attr('stroke-width', 1)
-    .attr('fill', 'none')
-})
+});
 </script>
