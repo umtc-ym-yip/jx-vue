@@ -4,7 +4,7 @@ const defaultConfig = {
   show: false,
   title: '',
   text: '',
-  icon: '',
+  icon: 'success',
   showCloseButton: true,
   showConfirmButton: true,
   confirmButtonText: '確認',
