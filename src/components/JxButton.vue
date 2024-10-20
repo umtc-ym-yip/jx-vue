@@ -145,8 +145,7 @@ watch(
         animationClass.value = 'opacity-100 '
       }, 200)
     }
-  },
-  { immediate: true }
+  }
 )
 const emit = defineEmits(['click'])
 
