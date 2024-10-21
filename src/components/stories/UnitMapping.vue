@@ -1,5 +1,5 @@
 <template>
-  <D3UnitMapping v-if="gerberData" :data-object="gerberData" :x-key="'x'" :y-key="'y'" />
+  <D3UnitMapping v-if="gerberData" :data="gerberData.coordinates" :x-key="'x'" :y-key="'y'" />
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
@@ -17,12 +17,9 @@ async function fetchGerberFile(url) {
 onMounted(async () => {
   try {
     const gerberContent = await fetchGerberFile('http://192.168.0.185:3000/gerber')
-    console.log('gerberContent', gerberContent)
     if (gerberContent) {
-        console.log('parseGerberFile(gerberContent)',parseGerberFile(gerberContent))
       gerberData.value = parseGerberFile(gerberContent)
     }
-    console.log('gerberData', gerberData.value)
   } catch (error) {
     console.error('Failed to fetch gerber content', error)
   }
