@@ -22,7 +22,8 @@ export const d3Links = [
   { name: 'D3PanelMapping', path: '/stories/panelmapping' },
   { name: 'D3StackBarTrend', path: '/stories/stackbartrend' },
   { name: 'D3Pareto', path: '/stories/pareto' },
-  { name: 'D3HotZone', path: '/stories/hotzone' }
+  { name: 'D3HotZone', path: '/stories/hotzone' },
+  { name: 'D3UnitMapping', path: '/stories/unitmapping' }
   // 添加更多 nav2 的連結...
 ]
 

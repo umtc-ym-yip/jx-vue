@@ -435,17 +435,19 @@ const getLayoutData = () =>
 
 async function loadData() {
   try {
-    const [res1, res2] = await Promise.all([
+    const [res1, res2] = await Promise.allSettled([
       getmappingData('249PE002-04-00', '-L9L14', 0, 'ptaoi', 'YM'),
       getLayoutData()
     ])
-    mappingData.value = res1.data
-    layoutData.value = res2.data.dataAry
+    if (res1.status === 'fulfilled') {
+      res1.data ? (mappingData.value = res1.data) : (mappingData.value = mockMappingData)
+    }
+    if (res2.status === 'fulfilled') {
+      res2.data ? (layoutData.value = res2.data.dataAry) : (layoutData.value = mockLayoutData)
+    } 
     dataLoaded.value = true
   } catch (error) {
-    mappingData.value = mockMappingData
-    layoutData.value = mockLayoutData
-    dataLoaded.value = true
+    console.error('Failed to fetch data', error)
   }
 }
 onMounted(() => {

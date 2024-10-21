@@ -190,7 +190,7 @@ export function useD3Base(context) {
       xAxis = d3.axisBottom(xScale)
     } else if (type === 'ticks') {
       xAxis = d3.axisBottom(xScale).tickFormat((d, i) => (i % sampleRate === 0 ? d : ''))
-    } else if (type === 'table-mapping') {
+    } else if (type === 'table-mapping' || type === 'unit-mapping') {
       xAxis = d3.axisBottom(xScale).tickSizeOuter(0).tickSizeInner(5).ticks(5)
     } else if (type === 'hot-zone') {
       xAxis = d3.axisBottom(xScale).tickSizeOuter(0).tickSizeInner(0)
@@ -200,7 +200,7 @@ export function useD3Base(context) {
 
     let xAxisGroup
 
-    if (type === 'table-mapping') {
+    if (type === 'table-mapping' || type === 'unit-mapping') {
       xAxisGroup = svg
         .append('g')
         .attr('class', 'x-axis')
@@ -263,7 +263,7 @@ export function useD3Base(context) {
   const drawYAxis = (type, toLeft, yScale) => {
     svg.selectAll('.y-axis').remove()
     let yAxis
-    if (type === 'table-mapping') {
+    if (type === 'table-mapping' || type === 'unit-mapping') {
       yAxis = d3.axisLeft(yScale).tickSizeOuter(0).tickSizeInner(5).ticks(5)
       svg
         .append('g')
