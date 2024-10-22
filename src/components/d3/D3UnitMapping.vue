@@ -1,12 +1,37 @@
 <template>
-  <div ref="chartContainer" class="relative"></div>
+  <div ref="chartContainer" class="relative">
+    <!-- 給客製化生成tooltip位置使用 -->
+    <!-- 客製化tooltip，用作用域插槽傳遞內部資料出去，利用setTooltipRef去取得外部元素 -->
+    <slot
+      name="tooltip"
+      :show="tooltipShow"
+      :data="tooltipData"
+      :x="tooltipLoc.x"
+      :y="tooltipLoc.y"
+      :setTooltipRef="setTooltipRef"
+      ><div
+        ref="tooltip"
+        class="absolute bg-white border border-gray-300 rounded p-2.5 text-sm"
+        :class="{ 'opacity-0': hiddenTooltip }"
+        v-if="tooltipShow"
+        :style="{ left: `${tooltipLoc.x}px`, top: `${tooltipLoc.y}px` }"
+      >
+        {{ props.xKey }}: {{ tooltipData[props.xKey] }}<br />
+        {{ props.yKey }}: {{ tooltipData[props.yKey] }}
+      </div>
+    </slot>
+  </div>
+  <div class="absolute" :style="buttonStyle" v-if="resetBtnShow">
+    <JxButton size="sm" color="secondary" :is-outline="true" @click="reset">Reset</JxButton>
+  </div>
 </template>
 <script setup>
 import * as d3 from 'd3'
 import axios from 'axios'
-import { ref, watch, onMounted, useSlots } from 'vue'
+import { ref, computed, watch, onMounted, useSlots } from 'vue'
+import JxButton from '@/components/JxButton.vue'
 
-import { state, resetState } from '@/composables/d3/useD3Gerber'
+import { useD3Gerber } from '@/composables/d3/useD3Gerber'
 import { useD3Context } from '@/composables/d3/useD3Context'
 import { useD3Base } from '@/composables/d3/useD3Base'
 import { useD3Element } from '@/composables/d3/useD3Element'
@@ -14,17 +39,21 @@ import { useD3Interaction } from '@/composables/d3/useD3Interaction'
 import { useZoom } from '@/composables/d3/useD3Zoom'
 
 const props = defineProps({
-  data: {
+  gerberData: {
     type: Object,
+    required: true
+  },
+  data: {
+    type: Array,
     required: true
   },
   width: {
     type: Number,
-    default: 400
+    default: 500
   },
   height: {
     type: Number,
-    default: 300
+    default: 500
   },
   margin: {
     type: Object,
@@ -37,9 +66,15 @@ const props = defineProps({
   yKey: {
     type: String,
     required: true
+  },
+  seriesKey: {
+    type: String,
+    required: true
   }
 })
-
+const buttonStyle = computed(() => {
+  return `left: ${props.width - props.margin.right}px; top: ${props.margin.top}px;`
+})
 const slots = useSlots()
 const chartContainer = ref(null)
 const context = useD3Context(props, chartContainer, slots)
@@ -58,13 +93,9 @@ const {
   legendMouseOver,
   legendMouseOut
 } = useD3Interaction(context)
+const { createBrush, brushEnd, resetZoom, resetBtnShow } = useZoom(context)
 
-let xScale,
-  yScale,
-  regionPath,
-  isInRegion = false,
-  currentPath = []
-const paths = []
+const { state, renderGerber } = useD3Gerber()
 
 function drawChart() {
   if (!chartContainer.value) return
@@ -72,92 +103,53 @@ function drawChart() {
   d3.select(chartContainer.value).selectAll('*').remove()
 
   const { svg, innerContent } = initChart()
-  const { xScale, yScale } = createScales()
+  // const { xScale, yScale } = createScales()
+
+  const xData = props.gerberData.coordinates.map((d) => d.x).filter((d) => d !== undefined)
+  const yData = props.gerberData.coordinates.map((d) => d.y).filter((d) => d !== undefined)
+  const maxX = Math.max(...xData)
+  const minX = Math.min(...xData)
+  const maxY = Math.max(...yData)
+  const minY = Math.min(...yData)
+
+  const xScale = d3
+    .scaleLinear()
+    .domain([minX - 1, maxX + 1])
+    .range([props.margin.left, props.width - props.margin.right])
+
+  const yScale = d3
+    .scaleLinear()
+    .domain([minY - 1, maxY + 1])
+    .range([props.height - props.margin.bottom, props.margin.top])
 
   drawXAxis('unit-mapping', null, xScale)
   drawYAxis('unit-mapping', props.margin.left, yScale)
-  renderGerber(state, innerContent, xScale, yScale)
-}
 
-function addToPath(coord, xScale, yScale) {
-  if (coord.command === '02' || currentPath.length === 0) {
-    if (currentPath.length > 0) {
-      paths.push(currentPath)
-    }
-    currentPath = [coord]
-  } else {
-    currentPath.push(coord)
-  }
-}
-function addToRegion(coord, xScale, yScale) {
-  if (coord.command === '02') {
-    regionPath += `M${xScale(coord.x)},${yScale(coord.y)}`
-  } else if (coord.g === '01') {
-    regionPath += `L${xScale(coord.x)},${yScale(coord.y)}`
-  } else {
-    const d = arc({
-      startAngle: 0,
-      endAngle: Math.PI * 2,
-      x: coord.x,
-      y: coord.y,
-      i: coord.i,
-      j: coord.j
-    })
-    regionPath += d
-  }
-}
-function renderGerber(state, innerContent, xScale, yScale) {
-
-  const line = d3
-    .line()
-    .x((d) => xScale(d.x))
-    .y((d) => yScale(d.y))
-  // const arc = d3
-  //   .arc()
-  //   .innerRadius(0)
-  //   .outerRadius((d) => Math.abs(d.i || d.j) * (xScale(1) - xScale(0)))
-  state.coordinates.forEach((coord) => {
-    if (coord.command === 'G36') {
-      isInRegion = true
-      regionPath = ''
-    } else if (coord.command === 'G37') {
-      isInRegion = false
-    } else if (isInRegion) {
-      addToRegion(coord, xScale, yScale)
-      // 繪製pad
-    } else if (coord.command === '03') {
-      const aperture = state.apertures[coord.aperture]
-      if (aperture && aperture.shape === 'C') {
-        innerContent
-          .append('circle')
-          .attr('cx', xScale(coord.x))
-          .attr('cy', yScale(coord.y))
-          .attr('r', aperture.params[0] * 10)
-          .attr('fill', state.layerPolarity === 'dark' ? 'gray' : 'white')
-      }
-    } else {
-      addToPath(coord, xScale, yScale)
-    }
+  renderGerber(props.gerberData, innerContent, xScale, yScale)
+  drawPoints({
+    chartType: 'unit-mapping',
+    innerContent,
+    xScale,
+    getYValue: (d) => yScale(d[props.yKey]),
+    onMouseOver: pointMouseOver(svg, innerContent, 7),
+    onMouseOut: pointMouseOut(innerContent, 3),
+    onRectMouseOver: legendMouseOver(innerContent),
+    onRectMouseOut: legendMouseOut(innerContent),
+    onTextMouseOver: legendMouseOver(innerContent),
+    onTextMouseOut: legendMouseOut(innerContent),
+    data: props.data
   })
-
-  if (currentPath.length > 0) {
-    paths.push(currentPath)
-  }
-
-  innerContent
-    .selectAll('path.gerber-path')
-    .data(paths)
-    .enter()
-    .append('path')
-    .attr('class', 'gerber-path')
-    .attr('d', (d) => line(d))
-    .attr('fill', 'none')
-    .attr('stroke', state.layerPolarity === 'dark' ? 'gray' : 'white')
-    .attr('stroke-width', 1)
+  drawLegend({
+    svg,
+    onRectMouseOver: legendMouseOver(innerContent),
+    onRectMouseOut: legendMouseOut(innerContent),
+    onTextMouseOver: legendMouseOver(innerContent),
+    onTextMouseOut: legendMouseOut(innerContent)
+  })
 }
 
 onMounted(() => {
   drawChart()
 })
-watch(() => props.gerberContent, drawChart, { deep: true })
+watch(() => props.data, drawChart, { deep: true })
 </script>

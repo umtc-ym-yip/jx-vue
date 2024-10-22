@@ -50,7 +50,6 @@ export function useD3Element(context) {
 
     innerContent.selectAll(`.point`).remove()
     const points = innerContent.selectAll(`.point`).data(data, keyFn)
-
     // Enter + Update
     points
       .enter()
@@ -58,14 +57,19 @@ export function useD3Element(context) {
       .attr('class', (d) => `point point-${d[seriesKey]}`)
       .attr('r', 0)
       .filter((d) => xScale(d[xKey]) !== undefined && getYValue(d) !== undefined)
-      .attr('cx', (d) =>
-        isNaN(xScale(d[xKey]))
+      .attr('cx', (d) => {
+        console.log('d', d)
+        console.log('xScale(d[xKey])', xScale(d[xKey]))
+        return isNaN(xScale(d[xKey]))
           ? null
           : xType === 'band'
             ? xScale(d[xKey]) + xScale.bandwidth() / 2
             : xScale(d[xKey])
-      )
-      .attr('cy', (d) => getYValue(d))
+      })
+      .attr('cy', (d) => {
+        console.log('getYValue(d)', getYValue(d))
+        return getYValue(d)
+      })
       .attr('r', (d) => (d[seriesKey] === '0' ? 1.5 : pointSize))
       .attr('fill', (d) => {
         if (seriesKey) {
@@ -78,7 +82,11 @@ export function useD3Element(context) {
         return color || 'steelblue'
       })
       .attr('opacity', (d) => (d[seriesKey] === '0' ? 0.2 : 1))
-      .attr('stroke', (d) => (d[seriesKey] === '0' || chartType === 'table-mapping' ? '' : 'white'))
+      .attr('stroke', (d) =>
+        d[seriesKey] === '0' || chartType === 'table-mapping' || chartType === 'unit-mapping'
+          ? ''
+          : 'white'
+      )
       .attr('stroke-width', 1)
       .on('mouseover', function (event, d) {
         if (onMouseOver) onMouseOver(event, d, this)

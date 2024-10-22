@@ -38,6 +38,7 @@ async function getImage(url, factory) {
 
 onMounted(async () => {
   const { ImagePath, DefectSeq } = props.data
+  console.log('ImagePath', `${ImagePath}/${DefectSeq}.jpg`)
   const result = await getImage(`${ImagePath}/${DefectSeq}.jpg`)
   imageData.value = result.data
 })
