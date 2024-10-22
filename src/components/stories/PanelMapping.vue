@@ -440,10 +440,10 @@ async function loadData() {
       getLayoutData()
     ])
     if (res1.status === 'fulfilled') {
-      res1.data ? (mappingData.value = res1.data) : (mappingData.value = mockMappingData)
+      res1.value?.data ? (mappingData.value = res1.value?.data) : (mappingData.value = mockMappingData)
     }
     if (res2.status === 'fulfilled') {
-      res2.data ? (layoutData.value = res2.data.dataAry) : (layoutData.value = mockLayoutData)
+      res2.value?.data?.dataAry ? (layoutData.value = res2.value?.data?.dataAry) : (layoutData.value = mockLayoutData)
     } 
     dataLoaded.value = true
   } catch (error) {
