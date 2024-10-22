@@ -58,18 +58,13 @@ export function useD3Element(context) {
       .attr('r', 0)
       .filter((d) => xScale(d[xKey]) !== undefined && getYValue(d) !== undefined)
       .attr('cx', (d) => {
-        console.log('d', d)
-        console.log('xScale(d[xKey])', xScale(d[xKey]))
         return isNaN(xScale(d[xKey]))
           ? null
           : xType === 'band'
             ? xScale(d[xKey]) + xScale.bandwidth() / 2
             : xScale(d[xKey])
       })
-      .attr('cy', (d) => {
-        console.log('getYValue(d)', getYValue(d))
-        return getYValue(d)
-      })
+      .attr('cy', (d) => getYValue(d))
       .attr('r', (d) => (d[seriesKey] === '0' ? 1.5 : pointSize))
       .attr('fill', (d) => {
         if (seriesKey) {

@@ -234,6 +234,9 @@ export function useD3Gerber() {
     }
   }
   function renderGerber(data, innerContent, xScale, yScale) {
+    innerContent.selectAll('path.gerber-path').remove()
+    innerContent.selectAll('circle.gerber-pad').remove()
+
     const line = d3
       .line()
       .x((d) => xScale(d.x))
@@ -243,7 +246,7 @@ export function useD3Gerber() {
     //   .arc()
     //   .innerRadius(0)
     //   .outerRadius((d) => Math.abs(d.i || d.j) * (xScale(1) - xScale(0)))
-
+    const padData = []
     data.coordinates.forEach((coord) => {
       if (coord.command === 'G36') {
         isInRegion = true
@@ -251,20 +254,37 @@ export function useD3Gerber() {
       } else if (coord.command === 'G37') {
         isInRegion = false
       } else if (isInRegion) {
-        addToRegion(coord, xScale, yScale)
+        // addToRegion(coord, xScale, yScale)
         // 繪製pad
       } else if (coord.command === '03') {
         const aperture = data.apertures[coord.aperture]
-        innerContent
-          .append('circle')
-          .attr('cx', xScale(coord.x))
-          .attr('cy', yScale(coord.y))
-          .attr('r', (d) => (aperture ? aperture?.params[0] * 10 : 1))
-          .attr('fill', state.layerPolarity === 'dark' ? 'gray' : 'white')
+
+        padData.push({
+          x: xScale(coord.x),
+          y: yScale(coord.y),
+          r: aperture ? aperture?.params[0] : 1
+        })
+        // innerContent
+        //   .append('circle')
+        //   .attr('class', 'gerber-pad')
+        //   .attr('cx', xScale(coord.x))
+        //   .attr('cy', yScale(coord.y))
+        //   .attr('r', (d) => (aperture ? aperture?.params[0] : 1))
+        //   .attr('fill', state.layerPolarity === 'dark' ? 'gray' : 'white')
       } else {
         addToPath(coord, xScale, yScale)
       }
     })
+
+    // innerContent
+    //   .selectAll('circle.gerber-pad')
+    //   .data(padData)
+    //   .enter()
+    //   .append('circle')
+    //   .attr('class', 'gerber-pad')
+    //   .attr('cx', (d) => d.x)
+    //   .attr('cy', (d) => d.y)
+    //   .attr('r', (d) => d.r)
 
     if (currentPath.length > 0) {
       paths.push(currentPath)

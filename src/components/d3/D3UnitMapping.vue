@@ -97,6 +97,8 @@ const { createBrush, brushEnd, resetZoom, resetBtnShow } = useZoom(context)
 
 const { state, renderGerber } = useD3Gerber()
 
+let brushContent
+
 function drawChart() {
   if (!chartContainer.value) return
 
@@ -122,10 +124,35 @@ function drawChart() {
     .domain([minY - 1, maxY + 1])
     .range([props.height - props.margin.bottom, props.margin.top])
 
+  const brush = createBrush((event) =>
+    brushEnd(event, xScale, yScale, () => {
+      renderGerber(props.gerberData, innerContent, xScale, yScale)
+      drawPoints({
+        chartType: 'unit-mapping',
+        innerContent,
+        xScale,
+        getYValue: (d) => yScale(d[props.yKey]),
+        onMouseOver: pointMouseOver(svg, innerContent, 7),
+        onMouseOut: pointMouseOut(innerContent, 3),
+        onRectMouseOver: legendMouseOver(innerContent),
+        onRectMouseOut: legendMouseOut(innerContent),
+        onTextMouseOver: legendMouseOver(innerContent),
+        onTextMouseOut: legendMouseOut(innerContent),
+        data: props.data
+      })
+      drawXAxis('unit-mapping', null, xScale)
+      drawYAxis('unit-mapping', props.margin.left, yScale)
+      brushContent.call(brush.move, null)
+    })
+  )
+
+  brushContent = innerContent.append('g').call(brush)
+
   drawXAxis('unit-mapping', null, xScale)
   drawYAxis('unit-mapping', props.margin.left, yScale)
 
   renderGerber(props.gerberData, innerContent, xScale, yScale)
+
   drawPoints({
     chartType: 'unit-mapping',
     innerContent,
@@ -139,6 +166,7 @@ function drawChart() {
     onTextMouseOut: legendMouseOut(innerContent),
     data: props.data
   })
+
   drawLegend({
     svg,
     onRectMouseOver: legendMouseOver(innerContent),
@@ -147,7 +175,9 @@ function drawChart() {
     onTextMouseOut: legendMouseOut(innerContent)
   })
 }
-
+function reset() {
+  resetZoom(drawChart)
+}
 onMounted(() => {
   drawChart()
 })

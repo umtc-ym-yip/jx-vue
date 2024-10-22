@@ -37,7 +37,7 @@
       >
         <template #tooltip="tooltipProps">
           <D3Tooltip v-bind="tooltipProps">
-            <template #default="{ data, status }">
+            <template #default="{ data }">
               <D3AsyncImage :data="data" :width="150" :height="150" />
               <p>缺點 : {{ data.Classify }}</p>
               <p>X : {{ data.Panel_X }}</p>
@@ -47,6 +47,10 @@
           </D3Tooltip>
         </template>
       </D3UnitMapping>
+      <div v-else class="flex flex-col justify-center items-center h-full">
+        <p class="mb-3">Loading...</p>
+        <i class="fas fa-spinner fa-spin mr-2"></i>
+      </div>
     </StorySection>
 
     <StorySection title="屬性說明">
