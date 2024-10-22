@@ -20,6 +20,7 @@ export function useD3Gerber() {
   }
 
   const paths = []
+  const regionPaths = []
 
   let regionPath
   let isInRegion = false
@@ -58,6 +59,8 @@ export function useD3Gerber() {
     REGION_START: 'G36*',
     REGION_END: 'G37*'
   }
+
+  let currentRegionPath = ''
 
   function parseGerberFile(gerberContent) {
     const lines = gerberContent.split('\n')
@@ -216,11 +219,11 @@ export function useD3Gerber() {
     }
   }
 
-  function addToRegion(coord, xScale, yScale) {
+  function addToRegion(coord, xScale, yScale, arc) {
     if (coord.command === '02') {
-      regionPath += `M${xScale(coord.x)},${yScale(coord.y)}`
+      currentRegionPath += `M${xScale(coord.x)},${yScale(coord.y)}`
     } else if (coord.g === '01') {
-      regionPath += `L${xScale(coord.x)},${yScale(coord.y)}`
+      currentRegionPath += `L${xScale(coord.x)},${yScale(coord.y)}`
     } else {
       const d = arc({
         startAngle: 0,
@@ -230,75 +233,105 @@ export function useD3Gerber() {
         i: coord.i,
         j: coord.j
       })
-      regionPath += d
+      currentRegionPath += d
     }
   }
+
   function renderGerber(data, innerContent, xScale, yScale) {
-    innerContent.selectAll('path.gerber-path').remove()
-    innerContent.selectAll('circle.gerber-pad').remove()
+    // 清除現有內容
+    // innerContent.selectAll('*').remove()
 
     const line = d3
       .line()
       .x((d) => xScale(d.x))
       .y((d) => yScale(d.y))
 
-    // const arc = d3
-    //   .arc()
-    //   .innerRadius(0)
-    //   .outerRadius((d) => Math.abs(d.i || d.j) * (xScale(1) - xScale(0)))
+    const arc = d3
+      .arc()
+      .innerRadius(0)
+      .outerRadius((d) => Math.abs(d.i || d.j) * (xScale(1) - xScale(0)))
+
     const padData = []
+    const regionPaths = []
+    paths.length = 0 // 清空現有路徑
+    currentPath = []
+
+    let isInRegion = false
+
+    // 處理數據
     data.coordinates.forEach((coord) => {
       if (coord.command === 'G36') {
         isInRegion = true
-        regionPath = ''
+        currentRegionPath = ''
       } else if (coord.command === 'G37') {
         isInRegion = false
+        currentRegionPath += 'Z' // 閉合路徑
+        regionPaths.push(currentRegionPath)
+        currentRegionPath = ''
       } else if (isInRegion) {
-        // addToRegion(coord, xScale, yScale)
-        // 繪製pad
+        addToRegion(coord, xScale, yScale, arc)
       } else if (coord.command === '03') {
         const aperture = data.apertures[coord.aperture]
-
         padData.push({
           x: xScale(coord.x),
           y: yScale(coord.y),
-          r: aperture ? aperture?.params[0] : 1
+          r: aperture ? aperture.params[0] : 1
         })
-        // innerContent
-        //   .append('circle')
-        //   .attr('class', 'gerber-pad')
-        //   .attr('cx', xScale(coord.x))
-        //   .attr('cy', yScale(coord.y))
-        //   .attr('r', (d) => (aperture ? aperture?.params[0] : 1))
-        //   .attr('fill', state.layerPolarity === 'dark' ? 'gray' : 'white')
       } else {
         addToPath(coord, xScale, yScale)
       }
     })
 
-    // innerContent
-    //   .selectAll('circle.gerber-pad')
-    //   .data(padData)
-    //   .enter()
-    //   .append('circle')
-    //   .attr('class', 'gerber-pad')
-    //   .attr('cx', (d) => d.x)
-    //   .attr('cy', (d) => d.y)
-    //   .attr('r', (d) => d.r)
-
     if (currentPath.length > 0) {
       paths.push(currentPath)
     }
-    innerContent
-      .selectAll('path.gerber-path')
-      .data(paths)
-      .enter()
-      .append('path')
-      .attr('class', 'gerber-path')
-      .attr('d', (d) => line(d))
-      .attr('fill', 'none')
-      .attr('stroke', state.layerPolarity === 'dark' ? 'gray' : 'white')
-      .attr('stroke-width', 1)
+
+    // 繪製所有區域
+    // innerContent
+    //   .selectAll('path.gerber-region')
+    //   .data(regionPaths)
+    //   .join('path')
+    //   .attr('class', 'gerber-region')
+    //   .attr('d', (d) => d)
+    //   .attr('fill', state.layerPolarity === 'dark' ? 'gray' : 'white')
+    //   .attr('stroke', 'none')
+    //   .attr('opacity', 0.1)
+
+    // 使用 requestAnimationFrame 分批渲染 pads
+    function renderBatch(startIndex, batchSize) {
+      const endIndex = Math.min(startIndex + batchSize, padData.length)
+
+      innerContent
+        .append('g')
+        .attr('class', 'pads-container')
+        .selectAll('.circle')
+        .data(padData.slice(startIndex, endIndex), (d) => `${d.x},${d.y}`)
+        .join('circle')
+        .attr('class', 'gerber-pad')
+        .attr('cx', (d) => d.x)
+        .attr('cy', (d) => d.y)
+        .attr('r', (d) => d.r)
+        .attr('fill', state.layerPolarity === 'dark' ? 'gray' : 'white')
+
+      if (endIndex < padData.length) {
+        requestAnimationFrame(() => renderBatch(endIndex, batchSize))
+      } else {
+        // 所有 pads 渲染完成後，渲染路徑
+        innerContent
+          .append('g')
+          .selectAll('path.gerber-path')
+          .data(paths)
+          .join('path')
+          .attr('class', 'gerber-path')
+          .attr('d', line)
+          .attr('fill', 'none')
+          .attr('stroke', state.layerPolarity === 'dark' ? 'gray' : 'white')
+          .attr('stroke-width', 1)
+      }
+    }
+
+    // 開始分批渲染，每批 1000 個元素
+    renderBatch(0, 1000)
   }
 
   return {

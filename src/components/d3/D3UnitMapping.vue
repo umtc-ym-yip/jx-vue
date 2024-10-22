@@ -20,9 +20,9 @@
         {{ props.yKey }}: {{ tooltipData[props.yKey] }}
       </div>
     </slot>
-  </div>
-  <div class="absolute" :style="buttonStyle" v-if="resetBtnShow">
-    <JxButton size="sm" color="secondary" :is-outline="true" @click="reset">Reset</JxButton>
+    <div class="absolute" :style="buttonStyle" v-if="resetBtnShow">
+      <JxButton size="sm" color="secondary" :is-outline="true" @click="reset">Reset</JxButton>
+    </div>
   </div>
 </template>
 <script setup>
