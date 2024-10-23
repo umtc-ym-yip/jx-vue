@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import JxIcon from '@/components/JxIcon.vue'
+import JxAvatar from '@/components/JxAvatar.vue'
 import { navItems } from '@/config/navLinks'
 
 const activeNavItem = ref(null)
@@ -33,8 +34,7 @@ watch(route, () => {
     top: 0
   })
 })
-
-const switchValue = ref('one')
+const isShow = ref(false)
 </script>
 
 <template>
@@ -46,7 +46,7 @@ const switchValue = ref('one')
         <div class="p-4">
           <h1 class="flex justify-center text-2xl font-bold">JXVUE</h1>
         </div>
-        <ul>
+        <ul class="overflow-y-auto">
           <li
             v-for="item in navItems"
             :key="item.id"
@@ -64,7 +64,7 @@ const switchValue = ref('one')
 
       <!-- Dynamic list sidebar -->
       <div
-        class="bg-white shadow-xl border-gray-300 overflow-y-hidden transition-all duration-600"
+        class="bg-white shadow-xl border-gray-300 transition-all duration-600 overflow-y-auto"
         :class="{ 'w-auto': activeNavItem, 'w-0': !activeNavItem }"
       >
         <ul class="p-2">
@@ -87,6 +87,9 @@ const switchValue = ref('one')
 
     <!-- Main content -->
     <main ref="mainContent" class="flex-1 p-4 border border-dark-700 overflow-y-auto">
+      <div class="flex justify-end">
+        <JxAvatar name="Marvin" v-model:is-show="isShow" />
+      </div>
       <RouterView></RouterView>
     </main>
   </div>

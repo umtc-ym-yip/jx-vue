@@ -1,5 +1,6 @@
 export const componentLinks = [
   { name: 'Alert', path: '/stories/alert' },
+  { name: 'Avatar', path: '/stories/avatar' },
   { name: 'Button', path: '/stories/button' },
   { name: 'Board', path: '/stories/board' },
   { name: 'CheckBox', path: '/stories/checkbox' },

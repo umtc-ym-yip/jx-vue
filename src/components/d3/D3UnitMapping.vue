@@ -76,7 +76,7 @@ const slots = useSlots()
 const chartContainer = ref(null)
 const context = useD3Context(props, chartContainer, slots)
 
-const { initChart, drawXAxis, drawYAxis, createScales } = useD3Base(context)
+const { initChart, drawXAxis, drawYAxis } = useD3Base(context)
 const { drawPoints, drawLegend } = useD3Element(context)
 const {
   tooltip,
@@ -92,7 +92,7 @@ const {
 } = useD3Interaction(context)
 const { createBrush, brushEnd, resetZoom, resetBtnShow } = useZoom(context)
 
-const { state, renderGerber } = useD3Gerber()
+const { renderGerber } = useD3Gerber()
 
 let brushContent
 
