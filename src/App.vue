@@ -2,8 +2,6 @@
 import { ref, computed, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import JxIcon from '@/components/JxIcon.vue'
-import JxCheckBox from '@/components/JxCheckBox.vue'
-
 import { navItems } from '@/config/navLinks'
 
 const activeNavItem = ref(null)
@@ -36,7 +34,7 @@ watch(route, () => {
   })
 })
 
-const date = ref()
+const switchValue = ref('one')
 </script>
 
 <template>

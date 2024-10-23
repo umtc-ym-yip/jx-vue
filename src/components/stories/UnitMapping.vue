@@ -306,7 +306,7 @@ async function fetchGerberFile(url) {
 
 onMounted(async () => {
   try {
-    const gerberContent = await fetchGerberFile('http://192.168.0.185:3000/gerber')
+    const gerberContent = await fetchGerberFile('http://WYMANU00954:8000/gerber')
     if (gerberContent) {
       gerberData.value = parseGerberFile(gerberContent)
     }

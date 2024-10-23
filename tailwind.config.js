@@ -3,6 +3,9 @@ export default {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      cursor: {
+        inherit: 'inherit'
+      },
       colors: {
         primary: {
           DEFAULT: '#1890ff',

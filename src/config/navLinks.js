@@ -9,6 +9,7 @@ export const componentLinks = [
   { name: 'Icon', path: '/stories/icon' },
   { name: 'Notice', path: '/stories/notice' },
   { name: 'Radio', path: '/stories/radio' },
+  { name: 'Switch', path: '/stories/switch' },
   { name: 'Modal', path: '/stories/modal' },
   { name: 'Select', path: '/stories/select' },
   { name: 'Tab', path: '/stories/tab' },

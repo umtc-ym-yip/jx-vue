@@ -16,7 +16,8 @@ const componentConfigs = [
   { path: '/emptystatus', name: 'EmptyStatus' },
   { path: '/checkbox', name: 'CheckBox' },
   { path: '/notice', name: 'Notice' },
-  { path: '/datepicker', name: 'DatePicker' }
+  { path: '/datepicker', name: 'DatePicker' },
+  { path: '/switch', name: 'Switch' }
 ]
 const d3Configs = [
   { path: '/pointtrend', name: 'PointTrend' },

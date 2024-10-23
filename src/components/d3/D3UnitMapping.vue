@@ -1,7 +1,5 @@
 <template>
   <div ref="chartContainer" class="relative">
-    <!-- 給客製化生成tooltip位置使用 -->
-    <!-- 客製化tooltip，用作用域插槽傳遞內部資料出去，利用setTooltipRef去取得外部元素 -->
     <slot
       name="tooltip"
       :show="tooltipShow"
@@ -27,7 +25,6 @@
 </template>
 <script setup>
 import * as d3 from 'd3'
-import axios from 'axios'
 import { ref, computed, watch, onMounted, useSlots } from 'vue'
 import JxButton from '@/components/JxButton.vue'
 
@@ -105,7 +102,6 @@ function drawChart() {
   d3.select(chartContainer.value).selectAll('*').remove()
 
   const { svg, innerContent } = initChart()
-  // const { xScale, yScale } = createScales()
 
   const xData = props.gerberData.coordinates.map((d) => d.x).filter((d) => d !== undefined)
   const yData = props.gerberData.coordinates.map((d) => d.y).filter((d) => d !== undefined)
