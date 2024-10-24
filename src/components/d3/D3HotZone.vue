@@ -2,7 +2,7 @@
 <template>
   <div ref="chartContainer" class="relative">
     <!-- 給客製化生成tooltip位置使用 -->
-    <!-- 客製化tooltip，用作用域插槽傳遞內部資料出去，利用setTooltipRef去取得外部元素 -->
+    <!-- 客製化tooltip，用作用域插槽傳遞內部資料出去，利用setTooltipRef去取得外部元素1 -->
     <slot
       name="tooltip"
       :show="tooltipShow"
