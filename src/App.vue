@@ -1,13 +1,15 @@
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, toRef } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import JxIcon from '@/components/JxIcon.vue'
 import JxAvatar from '@/components/JxAvatar.vue'
+import JxScrollTop from '@/components/JxScrollTop.vue'
 import { navItems } from '@/config/navLinks'
 
 const activeNavItem = ref(null)
 const activeLinkName = ref(null)
 const mainContent = ref(null)
+const mainContentRef = toRef(mainContent)
 
 const currentLinks = computed(() => {
   const activeItem = navItems.find((item) => item.id === activeNavItem.value)
@@ -34,7 +36,7 @@ watch(route, () => {
     top: 0
   })
 })
-const test = ['測試1', '測試2', '測試3']
+
 const isShow = ref(false)
 </script>
 
@@ -91,6 +93,7 @@ const isShow = ref(false)
       <div class="flex justify-end">
         <JxAvatar name="Marvin" v-model:is-show="isShow" />
       </div>
+      <JxScrollTop :scrollable-ref="mainContent" />
       <RouterView></RouterView>
     </main>
   </div>
