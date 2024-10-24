@@ -34,6 +34,7 @@ watch(route, () => {
     top: 0
   })
 })
+const test = ['測試1', '測試2', '測試3']
 const isShow = ref(false)
 </script>
 

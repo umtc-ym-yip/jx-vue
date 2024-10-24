@@ -1,7 +1,9 @@
 <template>
   <div
     ref="avatarRef"
-    class="flex items-center justify-center w-10 h-10 bg-secondary-light rounded-full cursor-pointer relative"
+    class="flex items-center justify-center rounded-full cursor-pointer relative"
+    :class="[colorClass]"
+    :style="{ width: sizeStyle, height: sizeStyle }"
     @click="toggleShow"
   >
     <p v-if="displayName" :class="textClass" class="select-none">{{ displayName }}</p>
@@ -27,22 +29,41 @@
         :class="[{ 'opacity-0': !isShowLocal, 'opacity-100': isShowLocal }, navDirectionClass]"
       >
         <ul class="bg-white rounded-md w-32 py-2 shadow-md select-none">
-          <li class="px-4 py-2 hover:bg-gray-100 text-center">基本資料</li>
-          <li class="px-4 py-2 hover:bg-gray-100 text-center">帳號設定</li>
-          <li class="px-4 py-2 hover:bg-gray-100 text-center">登出</li>
+          <template v-if="hasCustomSlots">
+            <li
+              v-for="slotNames of customSlotNames"
+              :key="slotNames"
+              class="px-4 py-2 hover:bg-gray-100 text-center"
+            >
+              <slot :name="slotNames"></slot>
+            </li>
+          </template>
+          <template v-else>
+            <li class="px-4 py-2 hover:bg-gray-100 text-center">基本資料</li>
+            <li class="px-4 py-2 hover:bg-gray-100 text-center">帳號設定</li>
+            <li class="px-4 py-2 hover:bg-gray-100 text-center">登出</li>
+          </template>
         </ul>
       </nav>
     </slot>
   </div>
 </template>
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, useSlots, onMounted, onUnmounted } from 'vue'
 import JxIcon from './JxIcon.vue'
 
 const props = defineProps({
   name: {
     type: String,
     default: ''
+  },
+  color: {
+    type: String,
+    default: 'secondary-light'
+  },
+  size: {
+    type: String,
+    default: '10'
   },
   method: {
     type: String,
@@ -67,6 +88,12 @@ const props = defineProps({
 const emit = defineEmits(['update:isShow'])
 
 const avatarRef = ref(null)
+
+const slots = useSlots()
+const customSlotNames = computed(() => {
+  return Object.keys(slots).filter((name) => name !== 'default' && name !== 'nav')
+})
+const hasCustomSlots = computed(() => customSlotNames.value.length > 0)
 
 const displayName = computed(() => {
   if (props.method === 'first') {
@@ -99,6 +126,12 @@ const isShowLocal = computed({
 const navDirectionClass = computed(() => {
   return props.navDirection === 'right' ? 'right-2/3' : 'left-2/3'
 })
+
+const colorClass = computed(() => {
+  return `bg-${props.color}`
+})
+
+const sizeStyle = computed(() => `${parseInt(props.size) * 0.25}rem`)
 
 function toggleShow() {
   isShowLocal.value = !isShowLocal.value
